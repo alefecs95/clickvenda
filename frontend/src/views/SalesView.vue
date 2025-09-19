@@ -858,7 +858,7 @@
                       {{ canUseCredit ? 'Crédito suficiente para esta venda' : 'Crédito insuficiente para esta venda' }}
                     </p>
                     <p class="text-xs mt-1" :class="canUseCredit ? 'text-green-600' : 'text-red-600'">
-                      {{ canUseCredit ? `Sobrará R$ ${formatPrice(selectedCustomer.credit_limit - selectedCustomer.credit_used - total)}` : `Faltam R$ ${formatPrice(total - (selectedCustomer.credit_limit - selectedCustomer.credit_used))}` }}
+                      {{ canUseCredit ? `Sobrará R$ ${formatPrice((selectedCustomer.credit_limit - selectedCustomer.credit_used) - total)}` : `Faltam R$ ${formatPrice(total - (selectedCustomer.credit_limit - selectedCustomer.credit_used))}` }}
                     </p>
                   </div>
                 </div>
@@ -1577,12 +1577,23 @@ const creditAmount = computed(() => {
 
 const canUseCredit = computed(() => {
   if (!selectedCustomer.value || selectedCustomer.value.credit_limit <= 0) {
+    console.log('canUseCredit: Cliente não selecionado ou sem limite de crédito')
     return false
   }
   const availableCredit = selectedCustomer.value.credit_limit - selectedCustomer.value.credit_used
   
+  console.log('canUseCredit debug:', {
+    customer: selectedCustomer.value.name,
+    creditLimit: selectedCustomer.value.credit_limit,
+    creditUsed: selectedCustomer.value.credit_used,
+    availableCredit: availableCredit,
+    total: total.value,
+    canUse: availableCredit >= total.value
+  })
+  
   // Verificar se já está com limite estourado
   if (selectedCustomer.value.credit_used > selectedCustomer.value.credit_limit) {
+    console.log('canUseCredit: Limite estourado')
     return false // Limite já estourado, não pode usar mais crédito
   }
   

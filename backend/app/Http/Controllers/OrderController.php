@@ -181,10 +181,26 @@ class OrderController extends Controller
                 $creditAmount = 0;
                 if ($validated['payment_method'] === 'credit') {
                     $creditAmount = $finalAmount;
+                    
+                    // Validar se o cliente tem crédito suficiente
+                    if ($validated['customer_id']) {
+                        $customer = Customer::find($validated['customer_id']);
+                        if (!$customer->hasCreditFor($creditAmount)) {
+                            throw new \Exception("Cliente não possui crédito suficiente. Disponível: R$ " . number_format($customer->getAvailableCredit(), 2, ',', '.') . ", Necessário: R$ " . number_format($creditAmount, 2, ',', '.'));
+                        }
+                    }
                 } elseif ($validated['payment_method'] === 'multiple' && isset($validated['payment_methods'])) {
                     foreach ($validated['payment_methods'] as $payment) {
                         if ($payment['method'] === 'credit') {
                             $creditAmount += $payment['amount'];
+                        }
+                    }
+                    
+                    // Validar se o cliente tem crédito suficiente para múltiplos pagamentos
+                    if ($creditAmount > 0 && $validated['customer_id']) {
+                        $customer = Customer::find($validated['customer_id']);
+                        if (!$customer->hasCreditFor($creditAmount)) {
+                            throw new \Exception("Cliente não possui crédito suficiente. Disponível: R$ " . number_format($customer->getAvailableCredit(), 2, ',', '.') . ", Necessário: R$ " . number_format($creditAmount, 2, ',', '.'));
                         }
                     }
                 }

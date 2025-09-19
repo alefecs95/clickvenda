@@ -1,0 +1,17 @@
+backend/app/Http/Middleware/CorsDebug.php
+backend/app/Http/Middleware/CorsDebug.php
+frontend/.env
+backend/config/cors.php
+/backend/storage
+/backend/bootstrap/cache/*.ph
+backend/.env
+backend/.env.production
+backend/.env.development
+backend/.env.local
+backend/.env.staging
+backend/.env.test
+backend/.env.production
+backend/.env.development
+backend/.env.local
+backend/.env.staging
+backend/.env.test
