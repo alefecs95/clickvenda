@@ -18,21 +18,19 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Administrador',
                 'username' => 'admin',
-                'email' => 'admin@clickvenda.com',
                 'password' => Hash::make('123456'),
                 'cpf' => '123.456.789-00',
                 'is_admin' => true,
-                'status' => 'active',
+                'status' => 'ok',
                 'terms_accepted' => true,
             ],
             [
                 'name' => 'Vendedor',
                 'username' => 'vendedor',
-                'email' => 'vendedor@clickvenda.com',
                 'password' => Hash::make('123456'),
                 'cpf' => '987.654.321-00',
                 'is_admin' => false,
-                'status' => 'active',
+                'status' => 'ok',
                 'terms_accepted' => true,
             ],
         ];
