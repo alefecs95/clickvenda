@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Settings</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <h1>Debug de Configurações</h1>
+        
+        <div>
+            <h2>Token:</h2>
+            <p id="token"></p>
+        </div>
+        
+        <div>
+            <h2>Teste de API:</h2>
+            <button @click="testAPI">Testar API</button>
+            <pre id="api-result"></pre>
+        </div>
+        
+        <div>
+            <h2>Configurações Carregadas:</h2>
+            <pre id="settings-result"></pre>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+        
+        createApp({
+            setup() {
+                const token = ref('');
+                const apiResult = ref('');
+                const settingsResult = ref('');
+                
+                onMounted(() => {
+                    // Definir token
+                    const testToken = '6|JXaYIDnlDLec4a56qxA7psKVwmeazsuhesH4tlhm51ea0bf5';
+                    localStorage.setItem('token', testToken);
+                    token.value = testToken;
+                    
+                    // Testar carregamento
+                    testLoadSettings();
+                });
+                
+                const testAPI = async () => {
+                    try {
+                        const response = await axios.get('http://localhost:8000/api/settings/category/store', {
+                            headers: {
+                                'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                                'Accept': 'application/json'
+                            }
+                        });
+                        apiResult.value = JSON.stringify(response.data, null, 2);
+                    } catch (error) {
+                        apiResult.value = 'Erro: ' + error.message;
+                    }
+                };
+                
+                const testLoadSettings = async () => {
+                    try {
+                        // Simular o store de settings
+                        const storeSettings = ref({
+                            name: 'ClickVenda',
+                            cnpj: '',
+                            phone: '',
+                            email: '',
+                            address: '',
+                            city: '',
+                            state: '',
+                            zip_code: '',
+                            receipt_footer: 'Obrigado pela preferência! Volte sempre!',
+                            whatsapp: ''
+                        });
+                        
+                        const salesSettings = ref({
+                            default_payment_term: 30,
+                            default_credit_limit: 500.00,
+                            credit_alert_percentage: 80,
+                            auto_send_reminders: false
+                        });
+                        
+                        const systemSettings = ref({
+                            require_customer_for_credit: true,
+                            block_negative_stock: true,
+                            auto_backup: true,
+                            theme: 'light',
+                            language: 'pt-BR',
+                            items_per_page: 25,
+                            auto_print_receipts: false
+                        });
+                        
+                        console.log('Carregando configurações do servidor...');
+                        
+                        // Verificar se há token
+                        const token = localStorage.getItem('token');
+                        if (!token) {
+                            console.warn('Nenhum token encontrado');
+                            return;
+                        }
+                        
+                        // Carregar configurações do banco de dados
+                        const [storeResponse, salesResponse, systemResponse] = await Promise.all([
+                            axios.get('http://localhost:8000/api/settings/category/store', {
+                                headers: {
+                                    'Authorization': 'Bearer ' + token,
+                                    'Accept': 'application/json'
+                                }
+                            }),
+                            axios.get('http://localhost:8000/api/settings/category/sales', {
+                                headers: {
+                                    'Authorization': 'Bearer ' + token,
+                                    'Accept': 'application/json'
+                                }
+                            }),
+                            axios.get('http://localhost:8000/api/settings/category/system', {
+                                headers: {
+                                    'Authorization': 'Bearer ' + token,
+                                    'Accept': 'application/json'
+                                }
+                            })
+                        ]);
+                        
+                        console.log('Respostas da API:', { storeResponse, salesResponse, systemResponse });
+                        
+                        let hasData = false;
+                        
+                        if (storeResponse.data.success) {
+                            const storeData = storeResponse.data.data;
+                            console.log('Dados da loja recebidos:', storeData);
+                            storeSettings.value = {
+                                name: storeData['store.name'] || '',
+                                cnpj: storeData['store.cnpj'] || '',
+                                phone: storeData['store.phone'] || '',
+                                email: storeData['store.email'] || '',
+                                address: storeData['store.address'] || '',
+                                city: storeData['store.city'] || '',
+                                state: storeData['store.state'] || '',
+                                zip_code: storeData['store.zip_code'] || '',
+                                receipt_footer: storeData['store.receipt_footer'] || '',
+                                whatsapp: storeData['store.whatsapp'] || ''
+                            };
+                            console.log('Configurações da loja atualizadas:', storeSettings.value);
+                            hasData = true;
+                        }
+                        
+                        if (salesResponse.data.success) {
+                            const salesData = salesResponse.data.data;
+                            console.log('Dados de vendas recebidos:', salesData);
+                            salesSettings.value = {
+                                default_payment_term: salesData['sales.default_payment_term'] || 30,
+                                default_credit_limit: salesData['sales.default_credit_limit'] || 500.00,
+                                credit_alert_percentage: salesData['sales.credit_alert_percentage'] || 80,
+                                auto_send_reminders: salesData['sales.auto_send_reminders'] ?? false
+                            };
+                            console.log('Configurações de vendas atualizadas:', salesSettings.value);
+                            hasData = true;
+                        }
+                        
+                        if (systemResponse.data.success) {
+                            const systemData = systemResponse.data.data;
+                            console.log('Dados do sistema recebidos:', systemData);
+                            systemSettings.value = {
+                                require_customer_for_credit: systemData['system.require_customer_for_credit'] ?? true,
+                                block_negative_stock: systemData['system.block_negative_stock'] ?? true,
+                                auto_backup: systemData['system.auto_backup'] ?? true,
+                                theme: systemData['system.theme'] || 'light',
+                                language: systemData['system.language'] || 'pt-BR',
+                                items_per_page: systemData['system.items_per_page'] || 25,
+                                auto_print_receipts: systemData['system.auto_print_receipts'] ?? false
+                            };
+                            console.log('Configurações do sistema atualizadas:', systemSettings.value);
+                            hasData = true;
+                        }
+                        
+                        settingsResult.value = JSON.stringify({
+                            store: storeSettings.value,
+                            sales: salesSettings.value,
+                            system: systemSettings.value,
+                            hasData: hasData
+                        }, null, 2);
+                        
+                    } catch (error) {
+                        console.error('Erro ao carregar configurações:', error);
+                        settingsResult.value = 'Erro: ' + error.message;
+                    }
+                };
+                
+                return {
+                    token,
+                    apiResult,
+                    settingsResult,
+                    testAPI
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

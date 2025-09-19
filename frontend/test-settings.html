@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste de Settings</title>
+</head>
+<body>
+    <h1>Teste de Carregamento de Settings</h1>
+    <div id="result"></div>
+    
+    <script>
+        // Definir token
+        localStorage.setItem('token', '5|X5s58bLNYerN0jem5Q0aTYk6UwfGcN6myZeQeTQdf25883a7');
+        
+        async function testSettings() {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                console.log('Token:', localStorage.getItem('token'));
+                
+                // Testar API diretamente
+                const response = await fetch('http://localhost:8000/api/settings/category/store', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('Status:', response.status);
+                console.log('Headers:', response.headers);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Dados recebidos:', data);
+                    resultDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    const errorText = await response.text();
+                    console.error('Erro:', errorText);
+                    resultDiv.innerHTML = '<p style="color: red;">Erro: ' + response.status + ' - ' + errorText + '</p>';
+                }
+            } catch (error) {
+                console.error('Erro na requisição:', error);
+                resultDiv.innerHTML = '<p style="color: red;">Erro: ' + error.message + '</p>';
+            }
+        }
+        
+        // Executar teste
+        testSettings();
+    </script>
+</body>
+</html>
