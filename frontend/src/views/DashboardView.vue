@@ -79,95 +79,83 @@
 
       <div v-else class="space-y-6 mb-8">
         <!-- Cards de Estatísticas -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <!-- Total Orders -->
-        <div class="bg-white rounded-lg shadow p-6">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <svg class="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-              </svg>
-            </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">Total Pedidos</p>
-              <p class="text-2xl font-semibold text-gray-900">{{ statistics?.total_orders || 0 }}</p>
-            </div>
+        <div class="bg-white rounded-lg shadow p-4 min-h-[120px] flex flex-col items-center justify-center text-center">
+          <div class="mb-3">
+            <svg class="h-8 w-8 text-blue-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 mb-1">Total Pedidos</p>
+            <p class="text-xl font-bold text-gray-900">{{ statistics?.total_orders ?? '--' }}</p>
           </div>
         </div>
 
         <!-- Total Service Orders -->
-        <div class="bg-white rounded-lg shadow p-6">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <svg class="h-8 w-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-              </svg>
-            </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">Total OS</p>
-              <p class="text-2xl font-semibold text-gray-900">{{ serviceOrderStatistics?.total || 0 }}</p>
-            </div>
+        <div class="bg-white rounded-lg shadow p-4 min-h-[120px] flex flex-col items-center justify-center text-center">
+          <div class="mb-3">
+            <svg class="h-8 w-8 text-purple-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 mb-1">Total OS</p>
+            <p class="text-xl font-bold text-gray-900">{{ serviceOrderStatistics?.total ?? '--' }}</p>
           </div>
         </div>
 
         <!-- Total Revenue -->
-        <div class="bg-white rounded-lg shadow p-6">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-              </svg>
-            </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">Receita Total</p>
-              <p class="text-2xl font-semibold text-gray-900">{{ formatPrice(totalRevenue) }}</p>
-            </div>
+        <div class="bg-white rounded-lg shadow p-4 min-h-[120px] flex flex-col items-center justify-center text-center">
+          <div class="mb-3">
+            <svg class="h-8 w-8 text-green-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 mb-1">Receita Total</p>
+            <p class="text-lg font-bold text-gray-900">{{ totalRevenue > 0 ? formatPrice(totalRevenue) : 'R$ 0,00' }}</p>
           </div>
         </div>
 
         <!-- Average Order Value -->
-        <div class="bg-white rounded-lg shadow p-6">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <svg class="h-8 w-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-              </svg>
-            </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">Ticket Médio</p>
-              <p class="text-2xl font-semibold text-gray-900">{{ formatPrice(statistics?.average_order_value || 0) }}</p>
-            </div>
+        <div class="bg-white rounded-lg shadow p-4 min-h-[120px] flex flex-col items-center justify-center text-center">
+          <div class="mb-3">
+            <svg class="h-8 w-8 text-yellow-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 mb-1">Ticket Médio</p>
+            <p class="text-lg font-bold text-gray-900">{{ statistics?.average_order_value ? formatPrice(statistics.average_order_value) : 'R$ 0,00' }}</p>
           </div>
         </div>
 
         <!-- Pending Orders -->
-        <div class="bg-white rounded-lg shadow p-6">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <svg class="h-8 w-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-            </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">Pedidos Pendentes</p>
-              <p class="text-2xl font-semibold text-gray-900">{{ statistics?.pending_orders || 0 }}</p>
-            </div>
+        <div class="bg-white rounded-lg shadow p-4 min-h-[120px] flex flex-col items-center justify-center text-center">
+          <div class="mb-3">
+            <svg class="h-8 w-8 text-orange-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 mb-1">Pedidos Pendentes</p>
+            <p class="text-xl font-bold text-gray-900">{{ statistics?.pending_orders ?? '--' }}</p>
           </div>
         </div>
 
         <!-- OS Em Andamento -->
-        <div class="bg-white rounded-lg shadow p-6">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <svg class="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-              </svg>
-            </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">OS Em Andamento</p>
-              <p class="text-2xl font-semibold text-gray-900">{{ serviceOrderStatistics?.em_andamento || 0 }}</p>
-            </div>
+        <div class="bg-white rounded-lg shadow p-4 min-h-[120px] flex flex-col items-center justify-center text-center">
+          <div class="mb-3">
+            <svg class="h-8 w-8 text-red-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 mb-1">OS Em Andamento</p>
+            <p class="text-xl font-bold text-gray-900">{{ serviceOrderStatistics?.em_andamento ?? '--' }}</p>
           </div>
         </div>
         </div>
@@ -305,7 +293,7 @@
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium text-gray-900">{{ activity.title }}</p>
                 <p class="text-xs text-gray-500">{{ activity.description }}</p>
-                <p class="text-xs text-gray-400">{{ formatRelativeTime ? formatRelativeTime(activity.created_at) : 'Data não disponível' }}</p>
+                <p class="text-xs text-gray-400">{{ formatActivityTime(activity.created_at) }}</p>
               </div>
               <div class="text-right">
                 <p class="text-sm font-medium text-gray-900">{{ formatPrice(activity.amount) }}</p>
@@ -505,9 +493,7 @@ const serviceOrderStatistics = computed(() => serviceOrdersStore.statistics)
 const totalRevenue = computed(() => {
   const ordersRevenue = Number(statistics.value?.total_revenue) || 0
   const serviceOrdersRevenue = Number(serviceOrderStatistics.value?.receita_total) || 0
-  const total = ordersRevenue + serviceOrdersRevenue
-  console.log('Receita calculada:', { ordersRevenue, serviceOrdersRevenue, total })
-  return total
+  return ordersRevenue + serviceOrdersRevenue
 })
 
 // Clientes com alto risco de crédito (>80% do limite usado)
@@ -646,6 +632,16 @@ const formatRelativeTime = (dateString: string) => {
   if (diffInDays < 7) return `${diffInDays}d atrás`
   
   return date.toLocaleDateString('pt-BR')
+}
+
+const formatActivityTime = (dateString: string) => {
+  try {
+    if (!dateString) return 'Data não disponível'
+    return formatRelativeTime(dateString)
+  } catch (error) {
+    console.error('Erro ao formatar data:', error)
+    return 'Data inválida'
+  }
 }
 
 onMounted(() => {
