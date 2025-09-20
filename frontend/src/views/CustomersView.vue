@@ -575,19 +575,19 @@
           <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="bg-blue-50 rounded-lg p-4 text-center">
               <div class="text-2xl font-bold text-blue-600">{{ customerHistory.statistics.total_orders }}</div>
-              <div class="text-sm text-blue-700">Total de Pedidos</div>
+              <div class="text-sm text-blue-700">Pedidos de Venda</div>
+            </div>
+            <div class="bg-purple-50 rounded-lg p-4 text-center">
+              <div class="text-2xl font-bold text-purple-600">{{ customerHistory.statistics.total_service_orders }}</div>
+              <div class="text-sm text-purple-700">Ordens de Serviço</div>
             </div>
             <div class="bg-green-50 rounded-lg p-4 text-center">
-              <div class="text-2xl font-bold text-green-600">R$ {{ formatPrice(customerHistory.statistics.total_spent) }}</div>
+              <div class="text-2xl font-bold text-green-600">R$ {{ formatPrice(customerHistory.statistics.total_spent + customerHistory.statistics.total_service_spent) }}</div>
               <div class="text-sm text-green-700">Total Gasto</div>
             </div>
             <div class="bg-orange-50 rounded-lg p-4 text-center">
               <div class="text-2xl font-bold text-orange-600">R$ {{ formatPrice(customerHistory.statistics.total_credit_used) }}</div>
               <div class="text-sm text-orange-700">Crédito Utilizado</div>
-            </div>
-            <div class="bg-red-50 rounded-lg p-4 text-center">
-              <div class="text-2xl font-bold text-red-600">R$ {{ formatPrice(customerHistory.statistics.total_pending) }}</div>
-              <div class="text-sm text-red-700">Pendente</div>
             </div>
           </div>
 
@@ -600,6 +600,13 @@
                 class="py-2 px-1 border-b-2 font-medium text-sm"
               >
                 Pedidos ({{ customerHistory.orders.length }})
+              </button>
+              <button
+                @click="historyTab = 'service-orders'"
+                :class="historyTab === 'service-orders' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                class="py-2 px-1 border-b-2 font-medium text-sm"
+              >
+                OS ({{ customerHistory.serviceOrders.length }})
               </button>
               <button
                 @click="historyTab = 'receivables'"
@@ -642,14 +649,86 @@
                   </div>
                   
                   <div class="text-sm text-gray-600">
-                    <span class="font-medium">Pagamento:</span> {{ getPaymentMethodText(order.payment_method) }}
-                    <span v-if="order.discount_amount > 0" class="ml-4 text-green-600">
-                      Desconto: R$ {{ formatPrice(order.discount_amount) }}
-                    </span>
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <span class="font-medium">Pagamento:</span> 
+                        <span class="ml-1 px-2 py-1 text-xs rounded-full" :class="getPaymentMethodBadgeClass(order.payment_method)">
+                          {{ getPaymentMethodText(order.payment_method) }}
+                        </span>
+                      </div>
+                      <div v-if="order.discount_amount > 0" class="text-green-600 text-xs">
+                        Desconto: R$ {{ formatPrice(order.discount_amount) }}
+                      </div>
+                    </div>
                   </div>
                   
                   <div v-if="order.notes" class="mt-2 text-xs text-gray-500 italic bg-gray-50 rounded p-2">
                     "{{ order.notes }}"
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab de OS -->
+            <div v-if="historyTab === 'service-orders'" class="space-y-4">
+              <div v-if="customerHistory.serviceOrders.length === 0" class="text-center py-8">
+                <svg class="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <p class="text-gray-600">Nenhuma OS encontrada</p>
+              </div>
+              
+              <div v-else class="space-y-3">
+                <div
+                  v-for="serviceOrder in customerHistory.serviceOrders"
+                  :key="serviceOrder.id"
+                  class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                >
+                  <div class="flex justify-between items-start mb-2">
+                    <div>
+                      <h4 class="font-semibold text-gray-900">OS #{{ serviceOrder.order_number }}</h4>
+                      <p class="text-sm text-gray-600">{{ formatDate(serviceOrder.opening_date) }} às {{ formatTime(serviceOrder.opening_date) }}</p>
+                      <p v-if="serviceOrder.vehicle" class="text-xs text-gray-500">
+                        Veículo: {{ serviceOrder.vehicle.plate }} - {{ serviceOrder.vehicle.make }} {{ serviceOrder.vehicle.model }}
+                      </p>
+                    </div>
+                    <div class="text-right">
+                      <div class="font-bold text-lg">R$ {{ formatPrice(serviceOrder.final_amount) }}</div>
+                      <span class="text-xs px-2 py-1 rounded-full" :class="getServiceOrderStatusClass(serviceOrder)">
+                        {{ getServiceOrderStatusText(serviceOrder) }}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div class="text-sm text-gray-600">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <span class="font-medium">Pagamento:</span> 
+                        <span class="ml-1 px-2 py-1 text-xs rounded-full" :class="getPaymentMethodBadgeClass(serviceOrder.payment_method)">
+                          {{ getPaymentMethodText(serviceOrder.payment_method) }}
+                        </span>
+                      </div>
+                      <div v-if="serviceOrder.discount_amount > 0" class="text-green-600 text-xs">
+                        Desconto: R$ {{ formatPrice(serviceOrder.discount_amount) }}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div v-if="serviceOrder.problem_description" class="mt-2 text-xs text-gray-500 italic bg-gray-50 rounded p-2">
+                    <strong>Problema:</strong> {{ serviceOrder.problem_description }}
+                  </div>
+                  
+                  <!-- Status de Pagamento -->
+                  <div v-if="serviceOrder.total_paid !== undefined" class="mt-2 text-xs">
+                    <div class="flex justify-between items-center">
+                      <span class="text-gray-600">Status Pagamento:</span>
+                      <span class="px-2 py-1 rounded-full text-xs font-semibold" :class="getServiceOrderPaymentStatusClass(serviceOrder)">
+                        {{ getServiceOrderPaymentStatusText(serviceOrder) }}
+                      </span>
+                    </div>
+                    <div v-if="serviceOrder.total_paid > 0" class="mt-1 text-xs text-gray-600">
+                      Pago: R$ {{ formatPrice(serviceOrder.total_paid) }} | Restante: R$ {{ formatPrice(serviceOrder.remaining_amount) }}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -694,8 +773,13 @@
                   <div v-if="receivable.payment_history?.length > 0" class="mt-3 pt-3 border-t border-gray-200">
                     <h5 class="text-xs font-medium text-gray-700 mb-2">Histórico de Pagamentos:</h5>
                     <div class="space-y-1">
-                      <div v-for="(payment, index) in receivable.payment_history" :key="index" class="flex justify-between text-xs bg-gray-50 rounded p-2">
-                        <span>{{ formatDate(payment.date) }} - {{ getPaymentMethodText(payment.method) }}</span>
+                      <div v-for="(payment, index) in receivable.payment_history" :key="index" class="flex justify-between items-center text-xs bg-gray-50 rounded p-2">
+                        <div class="flex items-center space-x-2">
+                          <span>{{ formatDate(payment.date) }}</span>
+                          <span class="px-2 py-1 rounded-full" :class="getPaymentMethodBadgeClass(payment.method)">
+                            {{ getPaymentMethodText(payment.method) }}
+                          </span>
+                        </div>
                         <span class="font-medium text-green-600">R$ {{ formatPrice(payment.amount) }}</span>
                       </div>
                     </div>
@@ -878,29 +962,56 @@ const viewCustomerHistory = async (customer: Customer) => {
     const api = (await import('@/services/api')).default
     
     // Buscar histórico completo do cliente
-    const [ordersResponse, receivablesResponse] = await Promise.all([
+    const [ordersResponse, receivablesResponse, serviceOrdersResponse] = await Promise.all([
       api.get(`/orders?customer_id=${customer.id}&per_page=100`),
-      api.get(`/receivables/customer/${customer.id}`)
+      api.get(`/receivables/customer/${customer.id}`),
+      api.get(`/service-orders?customer_id=${customer.id}&per_page=100`)
     ])
     
-    const orders = ordersResponse.data.success ? ordersResponse.data.data : []
-    const receivables = receivablesResponse.data.success ? receivablesResponse.data.data : []
+    // Garantir que orders seja sempre um array
+    const orders = ordersResponse.data.success 
+      ? (Array.isArray(ordersResponse.data.data) ? ordersResponse.data.data : [])
+      : []
+    
+    // Garantir que receivables seja sempre um array  
+    const receivables = receivablesResponse.data.success 
+      ? (Array.isArray(receivablesResponse.data.data) ? receivablesResponse.data.data : [])
+      : []
+    
+    // Debug: verificar estrutura da resposta de service-orders
+    console.log('Service Orders Response:', serviceOrdersResponse.data)
+    console.log('Service Orders Response Success:', serviceOrdersResponse.data.success)
+    console.log('Service Orders Response Data:', serviceOrdersResponse.data.data)
+    
+    // Garantir que serviceOrders seja sempre um array (mesma lógica do store)
+    const serviceOrders = serviceOrdersResponse.data.success 
+      ? (serviceOrdersResponse.data.data.data || serviceOrdersResponse.data.data || [])
+      : []
     
     // Debug: mostrar dados recebidos
     console.log('Orders recebidos:', orders)
     console.log('Receivables recebidos:', receivables)
+    console.log('Service Orders processados:', serviceOrders)
     
     customerHistory.value = {
       customer: customer,
       orders: orders,
+      serviceOrders: serviceOrders,
       receivables: receivables,
       statistics: {
         total_orders: orders.length,
+        total_service_orders: serviceOrders.length,
         total_spent: orders.reduce((sum: number, order: any) => {
           // Tentar diferentes campos de valor
           const amount = order.final_amount || order.subtotal || order.total_amount || order.total || 0
           const parsedAmount = parseFloat(amount) || 0
           console.log(`Pedido ${order.order_number}: valor = ${amount}, parsed = ${parsedAmount}`)
+          return sum + parsedAmount
+        }, 0),
+        total_service_spent: serviceOrders.reduce((sum: number, os: any) => {
+          const amount = os.final_amount || os.total_amount || 0
+          const parsedAmount = parseFloat(amount) || 0
+          console.log(`OS ${os.order_number}: valor = ${amount}, parsed = ${parsedAmount}`)
           return sum + parsedAmount
         }, 0),
         total_credit_used: receivables.reduce((sum: number, r: any) => {
@@ -1049,9 +1160,92 @@ const getPaymentMethodText = (method: string) => {
     'card': 'Cartão',
     'pix': 'PIX',
     'credit': 'A Prazo (Crédito)',
-    'multiple': 'Múltiplas Formas'
+    'multiple': 'Múltiplas Formas',
+    'dinheiro': 'Dinheiro',
+    'cartao_debito': 'Cartão de Débito',
+    'cartao_credito': 'Cartão de Crédito',
+    'transferencia': 'Transferência',
+    'aprazo': 'A Prazo'
   }
   return methods[method] || method
+}
+
+const getPaymentMethodBadgeClass = (method: string) => {
+  const badgeClasses: Record<string, string> = {
+    'money': 'bg-green-100 text-green-800',
+    'dinheiro': 'bg-green-100 text-green-800',
+    'card': 'bg-blue-100 text-blue-800',
+    'cartao_debito': 'bg-blue-100 text-blue-800',
+    'cartao_credito': 'bg-blue-100 text-blue-800',
+    'pix': 'bg-purple-100 text-purple-800',
+    'credit': 'bg-orange-100 text-orange-800',
+    'aprazo': 'bg-orange-100 text-orange-800',
+    'transferencia': 'bg-indigo-100 text-indigo-800',
+    'multiple': 'bg-gray-100 text-gray-800'
+  }
+  return badgeClasses[method] || 'bg-gray-100 text-gray-800'
+}
+
+// Funções específicas para OS
+const getServiceOrderStatusText = (serviceOrder: any) => {
+  const statusMap: Record<string, string> = {
+    'aberta': 'Aberta',
+    'em_andamento': 'Em Andamento',
+    'aguardando_aprovacao': 'Aguardando Aprovação',
+    'concluida': 'Concluída',
+    'cancelada': 'Cancelada'
+  }
+  return statusMap[serviceOrder.status] || serviceOrder.status
+}
+
+const getServiceOrderStatusClass = (serviceOrder: any) => {
+  const statusClasses: Record<string, string> = {
+    'aberta': 'bg-blue-100 text-blue-800',
+    'em_andamento': 'bg-yellow-100 text-yellow-800',
+    'aguardando_aprovacao': 'bg-purple-100 text-purple-800',
+    'concluida': 'bg-green-100 text-green-800',
+    'cancelada': 'bg-red-100 text-red-800'
+  }
+  return statusClasses[serviceOrder.status] || 'bg-gray-100 text-gray-800'
+}
+
+const getServiceOrderPaymentStatusText = (serviceOrder: any) => {
+  if (!serviceOrder.payment_method) {
+    return 'Não Informado'
+  }
+  
+  // Se tem pagamentos registrados
+  if (serviceOrder.total_paid !== undefined && serviceOrder.remaining_amount !== undefined) {
+    if (serviceOrder.remaining_amount <= 0) {
+      return 'Pago'
+    } else if (serviceOrder.total_paid > 0) {
+      return 'Parcial'
+    } else {
+      return 'Pendente'
+    }
+  }
+  
+  // Se é a prazo, considera pendente
+  if (serviceOrder.payment_method === 'aprazo') {
+    return 'A Prazo'
+  }
+  
+  // Para outras formas, considera pago
+  return 'Pago'
+}
+
+const getServiceOrderPaymentStatusClass = (serviceOrder: any) => {
+  const status = getServiceOrderPaymentStatusText(serviceOrder)
+  
+  const statusClasses: Record<string, string> = {
+    'Pago': 'bg-green-100 text-green-800',
+    'Parcial': 'bg-yellow-100 text-yellow-800',
+    'Pendente': 'bg-red-100 text-red-800',
+    'A Prazo': 'bg-blue-100 text-blue-800',
+    'Não Informado': 'bg-gray-100 text-gray-800'
+  }
+  
+  return statusClasses[status] || 'bg-gray-100 text-gray-800'
 }
 
 const getReceivableStatusText = (receivable: any) => {

@@ -11,11 +11,15 @@ use App\Http\Controllers\VasilhamesController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\ServiceOrderController;
+use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\VehicleController;
 
 // Rotas públicas
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::get('/roles/public', [RoleController::class, 'publicRoles']);
+Route::get('/vehicles/test', [VehicleController::class, 'test']); // Rota de teste sem autenticação
 
 // Rotas protegidas
 Route::middleware('auth:sanctum')->group(function () {
@@ -106,5 +110,49 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/pendencias', [VasilhamesController::class, 'pendencias']);
         Route::get('/pendencias/cliente/{clienteId}', [VasilhamesController::class, 'pendenciasPorCliente']);
         Route::post('/pendencias/{pendenciaId}/resolver', [VasilhamesController::class, 'resolverPendencia']);
+    });
+    
+    // Ordens de Serviço
+    Route::prefix('service-orders')->group(function () {
+        Route::get('/statistics', [ServiceOrderController::class, 'statistics']);
+        Route::post('/{serviceOrder}/approve', [ServiceOrderController::class, 'approve']);
+        Route::post('/{serviceOrder}/complete', [ServiceOrderController::class, 'complete']);
+        Route::post('/{serviceOrder}/convert-to-order', [ServiceOrderController::class, 'convertToOrder']);
+        
+        // Rotas para pagamentos de OS
+        Route::get('/{serviceOrder}/payments', [App\Http\Controllers\ServiceOrderPaymentController::class, 'index']);
+        Route::post('/{serviceOrder}/payments', [App\Http\Controllers\ServiceOrderPaymentController::class, 'store']);
+        Route::put('/{serviceOrder}/payments/{payment}', [App\Http\Controllers\ServiceOrderPaymentController::class, 'update']);
+        Route::delete('/{serviceOrder}/payments/{payment}', [App\Http\Controllers\ServiceOrderPaymentController::class, 'destroy']);
+        
+        Route::apiResource('/', ServiceOrderController::class)->parameters(['' => 'serviceOrder']);
+    });
+    
+    // Relatórios de pagamentos de OS
+    Route::prefix('service-order-payments')->group(function () {
+        Route::get('/reports', [App\Http\Controllers\ServiceOrderPaymentController::class, 'reports']);
+    });
+    
+    // Serviços
+    Route::prefix('services')->group(function () {
+        Route::get('/active', [ServiceController::class, 'active']);
+        Route::get('/categories', [ServiceController::class, 'categories']);
+        Route::get('/by-category', [ServiceController::class, 'byCategory']);
+        Route::get('/statistics', [ServiceController::class, 'statistics']);
+        Route::apiResource('/', ServiceController::class);
+    });
+    
+    // Veículos/Equipamentos
+    Route::prefix('vehicles')->group(function () {
+        Route::get('/active', [VehicleController::class, 'active']);
+        Route::get('/by-customer', [VehicleController::class, 'byCustomer']);
+        Route::get('/by-type', [VehicleController::class, 'byType']);
+        Route::get('/statistics', [VehicleController::class, 'statistics']);
+        Route::get('/{vehicle}/service-history', [VehicleController::class, 'serviceHistory']);
+        Route::get('/{id}', [VehicleController::class, 'show']); // Rota específica para show
+        Route::put('/{id}', [VehicleController::class, 'update']); // Rota específica para update
+        Route::delete('/{id}', [VehicleController::class, 'destroy']); // Rota específica para destroy
+        Route::get('/', [VehicleController::class, 'index']); // Rota específica para index
+        Route::post('/', [VehicleController::class, 'store']); // Rota específica para store
     });
 });

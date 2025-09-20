@@ -1,5 +1,5 @@
 <template>
-  <AppLayout>
+  <AppLayout class="max-w-8xl mx-auto">
     <div class="space-y-6">
       <!-- Header -->
       <div class="bg-white shadow-sm rounded-lg p-4 sm:p-6">
@@ -190,10 +190,10 @@
                 <div class="flex-1">
                   <div class="font-medium text-gray-900">{{ receivable.customer?.name || 'Cliente não identificado' }}</div>
                   <button
-                    @click="openOrderDetails(receivable.order)"
+                    @click="openOrderDetails(receivable.order || receivable.serviceOrder)"
                     class="text-xs font-medium text-primary-600 hover:text-primary-800 hover:underline"
                   >
-                    #{{ receivable.order?.order_number || 'N/A' }}
+                    #{{ getOrderNumber(receivable) }}
                   </button>
                 </div>
                 <div class="text-right">
@@ -309,10 +309,10 @@
                   <div class="text-sm font-medium text-gray-900">{{ receivable.customer?.name || 'Cliente não identificado' }}</div>
                   <div class="text-xs text-gray-500">
                     <button
-                      @click="openOrderDetails(receivable.order)"
+                      @click="openOrderDetails(receivable.order || receivable.serviceOrder)"
                       class="font-medium text-primary-600 hover:text-primary-800 hover:underline"
                     >
-                      #{{ receivable.order?.order_number || 'N/A' }}
+                      #{{ getOrderNumber(receivable) }}
                     </button>
                     <span v-if="receivable.customer?.phone" class="ml-2">• {{ receivable.customer.phone }}</span>
                   </div>
@@ -324,9 +324,9 @@
                 </td>
                 
                 <td class="px-3 py-4 text-center">
-                  <div class="text-sm font-medium text-gray-900">R$ {{ formatPrice(receivable.order?.final_amount || 0) }}</div>
-                  <div v-if="receivable.order?.discount_amount > 0" class="text-xs text-green-600">
-                    -R$ {{ formatPrice(receivable.order.discount_amount) }}
+                  <div class="text-sm font-medium text-gray-900">R$ {{ formatPrice(getOrderAmount(receivable)) }}</div>
+                  <div v-if="getOrderDiscount(receivable) > 0" class="text-xs text-green-600">
+                    -R$ {{ formatPrice(getOrderDiscount(receivable)) }}
                   </div>
                 </td>
                 
@@ -437,16 +437,16 @@
               <h4 class="font-semibold text-gray-900 mb-2">Informações da Venda</h4>
               <div class="space-y-2 text-sm">
                 <div class="flex justify-between">
-                  <span class="text-gray-600">Pedido:</span>
+                  <span class="text-gray-600">{{ selectedReceivable.serviceOrder ? 'OS:' : 'Pedido:' }}</span>
                   <button
-                    @click="openOrderDetails(selectedReceivable.order)"
+                    @click="openOrderDetails(selectedReceivable.order || selectedReceivable.serviceOrder)"
                     class="font-medium text-primary-600 hover:text-primary-800 hover:underline"
                   >
-                    #{{ selectedReceivable.order?.order_number || 'N/A' }}
+                    #{{ getOrderNumber(selectedReceivable) }}
                   </button>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-600">Data da venda:</span>
+                  <span class="text-gray-600">{{ selectedReceivable.serviceOrder ? 'Data da OS:' : 'Data da venda:' }}</span>
                   <span class="font-medium">{{ formatDate(selectedReceivable.created_at) }}</span>
                 </div>
                 <div class="flex justify-between">
@@ -473,8 +473,8 @@
               <h4 class="font-semibold text-gray-900 mb-2">Valores</h4>
               <div class="space-y-2 text-sm">
                 <div class="flex justify-between">
-                  <span class="text-gray-600">Total da venda:</span>
-                  <span class="font-medium">R$ {{ formatPrice(selectedReceivable.order?.final_amount || 0) }}</span>
+                  <span class="text-gray-600">{{ selectedReceivable.serviceOrder ? 'Total da OS:' : 'Total da venda:' }}</span>
+                  <span class="font-medium">R$ {{ formatPrice(getOrderAmount(selectedReceivable)) }}</span>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-600">Valor no crédito:</span>
@@ -610,8 +610,8 @@
               <span class="font-medium">{{ selectedReceivable.customer?.name }}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-gray-600">Pedido:</span>
-              <span class="font-medium">#{{ selectedReceivable.order?.order_number }}</span>
+              <span class="text-gray-600">{{ selectedReceivable.serviceOrder ? 'OS:' : 'Pedido:' }}</span>
+              <span class="font-medium">#{{ getOrderNumber(selectedReceivable) }}</span>
             </div>
             <div class="flex justify-between">
               <span class="text-gray-600">Valor total a receber:</span>
@@ -691,7 +691,10 @@
     <div v-if="showOrderModal && selectedOrder" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div class="relative top-4 sm:top-10 mx-auto p-4 sm:p-6 border w-full max-w-4xl shadow-lg rounded-lg bg-white m-4">
         <div class="flex justify-between items-center mb-4 sm:mb-6">
-          <h3 class="text-lg sm:text-xl font-bold text-gray-900">Detalhes da Venda #{{ selectedOrder.order_number }}</h3>
+          <h3 class="text-lg sm:text-xl font-bold text-gray-900">
+            {{ selectedOrder.order_number ? 'Detalhes da Venda' : 'Detalhes da OS' }} 
+            #{{ selectedOrder.order_number || selectedOrder.os_number }}
+          </h3>
           <button
             @click="showOrderModal = false"
             class="text-gray-400 hover:text-gray-600"
@@ -946,6 +949,33 @@ const getPaymentMethodText = (method: string) => {
     'multiple': 'Múltiplas Formas'
   }
   return methods[method] || method
+}
+
+const getOrderNumber = (receivable: any) => {
+  if (receivable.order) {
+    return receivable.order.order_number || 'N/A'
+  } else if (receivable.serviceOrder) {
+    return receivable.serviceOrder.order_number || 'N/A'
+  }
+  return 'N/A'
+}
+
+const getOrderAmount = (receivable: any) => {
+  if (receivable.order) {
+    return receivable.order.final_amount || 0
+  } else if (receivable.serviceOrder) {
+    return receivable.serviceOrder.final_amount || 0
+  }
+  return 0
+}
+
+const getOrderDiscount = (receivable: any) => {
+  if (receivable.order) {
+    return receivable.order.discount_amount || 0
+  } else if (receivable.serviceOrder) {
+    return receivable.serviceOrder.discount_amount || 0
+  }
+  return 0
 }
 
 const getCreditAmount = (receivable: any) => {
@@ -1360,15 +1390,27 @@ const registerPayment = async () => {
 
   paymentSubmitting.value = true
   try {
-    // Usar API real do backend
-    const result = await receivablesStore.addPayment(
-      selectedReceivable.value.id,
-      {
+    let result
+    
+    if (selectedReceivable.value.serviceOrder) {
+      // Registrar pagamento para OS
+      const response = await api.post(`/service-orders/${selectedReceivable.value.serviceOrder.id}/payments`, {
         amount: paymentAmount,
-        method: paymentForm.value.method,
+        payment_method: paymentForm.value.method,
         notes: paymentForm.value.notes
-      }
-    )
+      })
+      result = { success: response.data.success, data: response.data.data }
+    } else {
+      // Registrar pagamento para venda (método original)
+      result = await receivablesStore.addPayment(
+        selectedReceivable.value.id,
+        {
+          amount: paymentAmount,
+          method: paymentForm.value.method,
+          notes: paymentForm.value.notes
+        }
+      )
+    }
 
     if (result.success) {
       showPaymentModal.value = false
@@ -1376,7 +1418,7 @@ const registerPayment = async () => {
       await fetchReceivables()
       await customersStore.fetchCustomers()
       
-      const isFullyPaid = result.data?.status === 'paid'
+      const isFullyPaid = result.data?.status === 'paid' || result.data?.is_fully_paid
       alert(isFullyPaid ? 
         'Pagamento registrado! Conta quitada completamente.' : 
         `Pagamento de R$ ${formatPrice(paymentAmount)} registrado com sucesso.`
@@ -1446,8 +1488,8 @@ const sendReminder = (receivable: any) => {
 
 Olá ${customer.name}! 👋
 
-📋 *Pedido:* #${receivable.order_number}
-📅 *Data da compra:* ${formatDate(receivable.created_at)}
+📋 *${receivable.serviceOrder ? 'OS' : 'Pedido'}:* #${getOrderNumber(receivable)}
+📅 *Data da ${receivable.serviceOrder ? 'OS' : 'compra'}:* ${formatDate(receivable.created_at)}
 💰 *Valor a receber:* R$ ${formatPrice(creditAmount)}
 
 ${isOverdue(receivable) ? '🚨 *Esta conta está em atraso.* Por favor, entre em contato conosco para regularizar.' : '⏰ *Lembrete amigável* sobre sua conta pendente.'}

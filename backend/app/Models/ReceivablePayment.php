@@ -12,6 +12,7 @@ class ReceivablePayment extends Model
 
     protected $fillable = [
         'order_id',
+        'service_order_id',
         'customer_id',
         'total_receivable_amount',
         'paid_amount',
@@ -39,6 +40,11 @@ class ReceivablePayment extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+    
+    public function serviceOrder()
+    {
+        return $this->belongsTo(ServiceOrder::class);
     }
 
     // Métodos

@@ -39,6 +39,16 @@ class Customer extends Model
         return $this->hasMany(VasilhameMovimentacao::class, 'cliente_id');
     }
     
+    public function serviceOrders()
+    {
+        return $this->hasMany(ServiceOrder::class);
+    }
+    
+    public function vehicles()
+    {
+        return $this->hasMany(Vehicle::class);
+    }
+    
     /**
      * Calcula o crédito disponível
      */

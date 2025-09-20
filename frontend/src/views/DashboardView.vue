@@ -79,7 +79,7 @@
 
       <div v-else class="space-y-6 mb-8">
         <!-- Cards de Estatísticas -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
         <!-- Total Orders -->
         <div class="bg-white rounded-lg shadow p-6">
           <div class="flex items-center">
@@ -89,8 +89,23 @@
               </svg>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">Total de Pedidos</p>
+              <p class="text-sm font-medium text-gray-500">Total Pedidos</p>
               <p class="text-2xl font-semibold text-gray-900">{{ statistics?.total_orders || 0 }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Service Orders -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg class="h-8 w-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-gray-500">Total OS</p>
+              <p class="text-2xl font-semibold text-gray-900">{{ serviceOrderStatistics?.total || 0 }}</p>
             </div>
           </div>
         </div>
@@ -105,7 +120,7 @@
             </div>
             <div class="ml-4">
               <p class="text-sm font-medium text-gray-500">Receita Total</p>
-              <p class="text-2xl font-semibold text-gray-900">{{ formatPrice(statistics?.total_revenue || 0) }}</p>
+              <p class="text-2xl font-semibold text-gray-900">{{ formatPrice(totalRevenue) }}</p>
             </div>
           </div>
         </div>
@@ -136,6 +151,22 @@
             <div class="ml-4">
               <p class="text-sm font-medium text-gray-500">Pedidos Pendentes</p>
               <p class="text-2xl font-semibold text-gray-900">{{ statistics?.pending_orders || 0 }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- OS Em Andamento -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg class="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-gray-500">OS Em Andamento</p>
+              <p class="text-2xl font-semibold text-gray-900">{{ serviceOrderStatistics?.em_andamento || 0 }}</p>
             </div>
           </div>
         </div>
@@ -193,8 +224,9 @@
         </div>
       </div>
 
-      <!-- Order Status Chart -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <!-- Status Charts -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Order Status Chart -->
         <div class="bg-white rounded-lg shadow p-6">
           <h3 class="text-lg font-medium text-gray-900 mb-4">Status dos Pedidos</h3>
           <div class="space-y-4">
@@ -222,9 +254,75 @@
           </div>
         </div>
 
+        <!-- Service Order Status Chart -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Status das OS</h3>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                <span class="text-sm text-gray-700">Concluídas</span>
+              </div>
+              <span class="text-sm font-medium text-gray-900">{{ serviceOrderStatistics?.concluidas || 0 }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-yellow-500 rounded-full mr-3"></div>
+                <span class="text-sm text-gray-700">Em Andamento</span>
+              </div>
+              <span class="text-sm font-medium text-gray-900">{{ serviceOrderStatistics?.em_andamento || 0 }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
+                <span class="text-sm text-gray-700">Abertas</span>
+              </div>
+              <span class="text-sm font-medium text-gray-900">{{ serviceOrderStatistics?.abertas || 0 }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activities -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Atividades Recentes</h3>
+          <div v-if="recentActivities.length === 0" class="text-center py-8">
+            <p class="text-gray-500">Nenhuma atividade recente</p>
+          </div>
+          <div v-else class="space-y-3 max-h-64 overflow-y-auto">
+            <div 
+              v-for="activity in recentActivities" 
+              :key="activity.id"
+              class="flex items-start space-x-3 p-2 hover:bg-gray-50 rounded"
+            >
+              <div class="flex-shrink-0 mt-1">
+                <div :class="activity.type === 'order' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'" class="w-6 h-6 rounded-full flex items-center justify-center">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path v-if="activity.type === 'order'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-900">{{ activity.title }}</p>
+                <p class="text-xs text-gray-500">{{ activity.description }}</p>
+                <p class="text-xs text-gray-400">{{ formatRelativeTime ? formatRelativeTime(activity.created_at) : 'Data não disponível' }}</p>
+              </div>
+              <div class="text-right">
+                <p class="text-sm font-medium text-gray-900">{{ formatPrice(activity.amount) }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Orders and Service Orders -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <!-- Recent Orders -->
         <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Pedidos Recentes</h3>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-medium text-gray-900">Pedidos Recentes</h3>
+            <router-link to="/orders" class="text-sm text-primary-600 hover:text-primary-800">Ver todos</router-link>
+          </div>
           <div v-if="recentOrders.length === 0" class="text-center py-8">
             <p class="text-gray-500">Nenhum pedido recente</p>
           </div>
@@ -236,7 +334,7 @@
             >
               <div>
                 <p class="text-sm font-medium text-gray-900">#{{ order.order_number }}</p>
-                <p class="text-xs text-gray-500">{{ order.customer?.name }}</p>
+                <p class="text-xs text-gray-500">{{ order.customer?.name || 'Cliente não informado' }}</p>
               </div>
               <div class="text-right">
                 <p class="text-sm font-medium text-gray-900">{{ formatPrice(order.final_amount) }}</p>
@@ -254,12 +352,48 @@
             </div>
           </div>
         </div>
+
+        <!-- Recent Service Orders -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-medium text-gray-900">OS Recentes</h3>
+            <router-link to="/service-orders" class="text-sm text-primary-600 hover:text-primary-800">Ver todas</router-link>
+          </div>
+          <div v-if="recentServiceOrders.length === 0" class="text-center py-8">
+            <p class="text-gray-500">Nenhuma OS recente</p>
+          </div>
+          <div v-else class="space-y-3">
+            <div 
+              v-for="serviceOrder in recentServiceOrders" 
+              :key="serviceOrder.id"
+              class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+            >
+              <div>
+                <p class="text-sm font-medium text-gray-900">#{{ serviceOrder.order_number }}</p>
+                <p class="text-xs text-gray-500">{{ serviceOrder.customer?.name || serviceOrder.vehicle?.plate || 'Cliente não informado' }}</p>
+              </div>
+              <div class="text-right">
+                <p class="text-sm font-medium text-gray-900">{{ formatPrice(serviceOrder.final_amount) }}</p>
+                <span
+                  :class="{
+                    'bg-green-100 text-green-800': serviceOrder.status === 'concluida',
+                    'bg-yellow-100 text-yellow-800': serviceOrder.status === 'em_andamento',
+                    'bg-blue-100 text-blue-800': serviceOrder.status === 'aberta'
+                  }"
+                  class="inline-flex px-2 py-1 text-xs font-medium rounded-full"
+                >
+                  {{ getServiceOrderStatusText(serviceOrder.status) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Quick Actions -->
       <div class="bg-white rounded-lg shadow p-6">
         <h3 class="text-lg font-medium text-gray-900 mb-4">Ações Rápidas</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
           <button
             @click="router.push('/sales')"
             class="flex items-center p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
@@ -269,7 +403,20 @@
             </svg>
             <div class="text-left">
               <p class="text-sm font-medium text-gray-900">Nova Venda</p>
-              <p class="text-xs text-gray-500">Criar um novo pedido</p>
+              <p class="text-xs text-gray-500">Criar pedido</p>
+            </div>
+          </button>
+
+          <button
+            @click="router.push('/service-orders/new')"
+            class="flex items-center p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <svg class="h-6 w-6 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <div class="text-left">
+              <p class="text-sm font-medium text-gray-900">Nova OS</p>
+              <p class="text-xs text-gray-500">Ordem de serviço</p>
             </div>
           </button>
 
@@ -281,8 +428,8 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
             </svg>
             <div class="text-left">
-              <p class="text-sm font-medium text-gray-900">Gerenciar Produtos</p>
-              <p class="text-xs text-gray-500">Ver e editar produtos</p>
+              <p class="text-sm font-medium text-gray-900">Produtos</p>
+              <p class="text-xs text-gray-500">Gerenciar</p>
             </div>
           </button>
 
@@ -294,8 +441,8 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
             </svg>
             <div class="text-left">
-              <p class="text-sm font-medium text-gray-900">Gerenciar Clientes</p>
-              <p class="text-xs text-gray-500">Ver e editar clientes</p>
+              <p class="text-sm font-medium text-gray-900">Clientes</p>
+              <p class="text-xs text-gray-500">Gerenciar</p>
             </div>
           </button>
 
@@ -307,8 +454,21 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
             <div class="text-left">
-              <p class="text-sm font-medium text-gray-900">Ver Pedidos</p>
-              <p class="text-xs text-gray-500">Listar todos os pedidos</p>
+              <p class="text-sm font-medium text-gray-900">Pedidos</p>
+              <p class="text-xs text-gray-500">Ver todos</p>
+            </div>
+          </button>
+
+          <button
+            @click="router.push('/receivables')"
+            class="flex items-center p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <svg class="h-6 w-6 text-primary-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+            </svg>
+            <div class="text-left">
+              <p class="text-sm font-medium text-gray-900">Contas</p>
+              <p class="text-xs text-gray-500">A receber</p>
             </div>
           </button>
         </div>
@@ -320,12 +480,18 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useOrdersStore } from '@/stores/orders'
+import { useServiceOrdersStore } from '@/stores/serviceOrders'
 import { useCustomersStore } from '@/stores/customers'
+import { useProductsStore } from '@/stores/products'
+import { useSettingsStore } from '@/stores/settings'
 import AppLayout from '@/components/AppLayout.vue'
 
 const router = useRouter()
 const ordersStore = useOrdersStore()
+const serviceOrdersStore = useServiceOrdersStore()
 const customersStore = useCustomersStore()
+const productsStore = useProductsStore()
+const settingsStore = useSettingsStore()
 
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -333,6 +499,16 @@ const dateFrom = ref('')
 const dateTo = ref('')
 
 const statistics = computed(() => ordersStore.statistics)
+const serviceOrderStatistics = computed(() => serviceOrdersStore.statistics)
+
+// Receita total (vendas + OS)
+const totalRevenue = computed(() => {
+  const ordersRevenue = Number(statistics.value?.total_revenue) || 0
+  const serviceOrdersRevenue = Number(serviceOrderStatistics.value?.receita_total) || 0
+  const total = ordersRevenue + serviceOrdersRevenue
+  console.log('Receita calculada:', { ordersRevenue, serviceOrdersRevenue, total })
+  return total
+})
 
 // Clientes com alto risco de crédito (>80% do limite usado)
 const customersAtRisk = computed(() => {
@@ -347,8 +523,48 @@ const customersAtRisk = computed(() => {
   })
 })
 
-
 const recentOrders = computed(() => ordersStore.orders.slice(0, 5))
+const recentServiceOrders = computed(() => serviceOrdersStore.serviceOrders.slice(0, 5))
+
+// Atividades recentes combinadas (pedidos + OS)
+const recentActivities = computed(() => {
+  const activities = []
+  
+  // Adicionar pedidos recentes
+  if (recentOrders.value && Array.isArray(recentOrders.value)) {
+    recentOrders.value.forEach(order => {
+      activities.push({
+        id: `order-${order.id}`,
+        type: 'order',
+        title: `Pedido #${order.order_number || 'N/A'}`,
+        description: order.customer?.name || 'Cliente não informado',
+        amount: order.final_amount || 0,
+        created_at: order.created_at || new Date().toISOString()
+      })
+    })
+  }
+  
+  // Adicionar OS recentes
+  if (recentServiceOrders.value && Array.isArray(recentServiceOrders.value)) {
+    recentServiceOrders.value.forEach(serviceOrder => {
+      activities.push({
+        id: `service-order-${serviceOrder.id}`,
+        type: 'service-order',
+        title: `OS #${serviceOrder.order_number || 'N/A'}`,
+        description: serviceOrder.customer?.name || serviceOrder.vehicle?.plate || 'Cliente não informado',
+        amount: serviceOrder.final_amount || 0,
+        created_at: serviceOrder.created_at || new Date().toISOString()
+      })
+    })
+  }
+  
+  // Ordenar por data de criação (mais recente primeiro)
+  return activities.sort((a, b) => {
+    const dateA = new Date(a.created_at).getTime()
+    const dateB = new Date(b.created_at).getTime()
+    return dateB - dateA
+  }).slice(0, 10)
+})
 
 const loadStatistics = async () => {
   try {
@@ -360,8 +576,12 @@ const loadStatistics = async () => {
     console.log('Token disponível:', !!token)
     console.log('Datas sendo enviadas:', { dateFrom: dateFrom.value, dateTo: dateTo.value })
     
-    await ordersStore.fetchStatistics(dateFrom.value, dateTo.value)
-    await ordersStore.fetchOrders({ per_page: 5 })
+    await Promise.all([
+      ordersStore.fetchStatistics(dateFrom.value, dateTo.value),
+      serviceOrdersStore.fetchStatistics(),
+      ordersStore.fetchOrders({ per_page: 5 }),
+      serviceOrdersStore.fetchServiceOrders({ per_page: 5 })
+    ])
   } catch (err: any) {
     console.error('Erro ao carregar estatísticas:', err)
     error.value = err.message || 'Erro ao carregar estatísticas'
@@ -373,7 +593,9 @@ const loadStatistics = async () => {
 const refreshData = async () => {
   await Promise.all([
     loadStatistics(),
-    customersStore.fetchCustomers()
+    customersStore.fetchCustomers(),
+    productsStore.fetchProducts(),
+    settingsStore.loadSettings()
   ])
 }
 
@@ -395,6 +617,35 @@ const getStatusText = (status: string) => {
     cancelled: 'Cancelado'
   }
   return statusMap[status as keyof typeof statusMap] || status
+}
+
+const getServiceOrderStatusText = (status: string) => {
+  const statusMap = {
+    aberta: 'Aberta',
+    em_andamento: 'Em Andamento',
+    concluida: 'Concluída',
+    cancelada: 'Cancelada'
+  }
+  return statusMap[status as keyof typeof statusMap] || status
+}
+
+const formatRelativeTime = (dateString: string) => {
+  if (!dateString) return 'Data inválida'
+  
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
+  
+  if (diffInMinutes < 1) return 'Agora'
+  if (diffInMinutes < 60) return `${diffInMinutes}m atrás`
+  
+  const diffInHours = Math.floor(diffInMinutes / 60)
+  if (diffInHours < 24) return `${diffInHours}h atrás`
+  
+  const diffInDays = Math.floor(diffInHours / 24)
+  if (diffInDays < 7) return `${diffInDays}d atrás`
+  
+  return date.toLocaleDateString('pt-BR')
 }
 
 onMounted(() => {

@@ -80,6 +80,17 @@
             </router-link>
             
             <router-link
+              to="/service-orders"
+              class="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              :class="{ 'text-primary-600 bg-primary-50': $route.name === 'service-orders' }"
+            >
+              <svg class="inline h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+              </svg>
+              Ordens de Serviço
+            </router-link>
+            
+            <router-link
               to="/receivables"
               class="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               :class="{ 'text-primary-600 bg-primary-50': $route.name === 'receivables' }"
@@ -264,6 +275,18 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
             Pedidos
+          </router-link>
+          
+          <router-link
+            to="/service-orders"
+            @click="closeMobileMenu"
+            class="flex items-center text-gray-700 hover:text-primary-600 hover:bg-white px-3 py-3 rounded-lg text-base font-medium transition-colors"
+            :class="{ 'text-primary-600 bg-white shadow-sm': $route.name === 'service-orders' }"
+          >
+            <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+            </svg>
+            Ordens de Serviço
           </router-link>
           
           <router-link

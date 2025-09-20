@@ -150,4 +150,20 @@ class User extends Authenticatable
     {
         return $this->is_admin || $this->hasRole('admin');
     }
+    
+    /**
+     * Relacionamento com ordens de serviço como responsável técnico
+     */
+    public function technicalServiceOrders()
+    {
+        return $this->hasMany(ServiceOrder::class, 'technical_responsible_id');
+    }
+    
+    /**
+     * Relacionamento com ordens de serviço criadas pelo usuário
+     */
+    public function createdServiceOrders()
+    {
+        return $this->hasMany(ServiceOrder::class, 'created_by');
+    }
 }

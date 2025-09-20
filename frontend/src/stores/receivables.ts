@@ -4,7 +4,8 @@ import api from '@/services/api'
 
 export interface ReceivablePayment {
   id: number
-  order_id: number
+  order_id?: number
+  service_order_id?: number
   customer_id: number
   total_receivable_amount: number
   paid_amount: number
@@ -18,7 +19,8 @@ export interface ReceivablePayment {
     notes?: string
   }>
   notes?: string
-  order: any
+  order?: any
+  serviceOrder?: any
   customer: any
   created_at: string
   updated_at: string
@@ -70,19 +72,62 @@ export const useReceivablesStore = defineStore('receivables', () => {
         }
       })
 
-      const response = await api.get(`/receivables?${params.toString()}`)
+      // Buscar tanto vendas quanto OS a prazo
+      const [salesResponse, serviceOrdersResponse] = await Promise.all([
+        api.get(`/receivables?${params.toString()}`),
+        api.get(`/service-orders?${params.toString()}&payment_method=credit&per_page=100`)
+      ])
       
-      if (response.data.success) {
-        receivables.value = response.data.data
-        return {
-          success: true,
-          receivables: response.data.data
-        }
-      } else {
-        return {
-          success: false,
-          error: response.data.message || 'Erro ao carregar contas a receber'
-        }
+      let allReceivables: ReceivablePayment[] = []
+
+      // Processar vendas a prazo
+      if (salesResponse.data.success) {
+        allReceivables = [...salesResponse.data.data]
+      }
+
+      // Processar OS a prazo que NÃO têm ReceivablePayment criado
+      if (serviceOrdersResponse.data.success) {
+        const serviceOrders = serviceOrdersResponse.data.data.data || serviceOrdersResponse.data.data || []
+        
+        // Filtrar apenas OS a prazo que NÃO têm ReceivablePayment
+        const serviceOrdersWithoutReceivable = serviceOrders.filter((so: any) => {
+          // Verificar se já existe ReceivablePayment para esta OS
+          const hasReceivablePayment = allReceivables.some(r => r.service_order_id === so.id)
+          return !hasReceivablePayment && so.payment_method === 'credit'
+        })
+        
+        const serviceOrderReceivables = serviceOrdersWithoutReceivable.map((so: any) => ({
+          id: so.id + 100000, // ID único para OS (evitar conflito com vendas)
+          service_order_id: so.id,
+          customer_id: so.customer_id,
+          total_receivable_amount: so.final_amount,
+          paid_amount: so.total_paid || 0,
+          remaining_amount: so.remaining_amount || so.final_amount,
+          due_date: so.expected_delivery_date || so.opening_date,
+          status: so.is_fully_paid ? 'paid' : (so.total_paid > 0 ? 'partial' : 'pending'),
+          payment_history: so.payments?.map((p: any) => ({
+            amount: p.amount,
+            method: p.payment_method,
+            date: p.created_at,
+            notes: p.notes
+          })) || [],
+          notes: `OS #${so.order_number} - ${so.problem_description}`,
+          serviceOrder: so,
+          customer: so.customer,
+          created_at: so.created_at,
+          updated_at: so.updated_at
+        }))
+        
+        allReceivables = [...allReceivables, ...serviceOrderReceivables]
+      }
+
+      // Ordenar por data de criação (mais recente primeiro)
+      allReceivables.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+      receivables.value = allReceivables
+      return {
+        success: true,
+        receivables: allReceivables
       }
     } catch (err: any) {
       error.value = err.response?.data?.message || err.message || 'Erro ao carregar contas a receber'

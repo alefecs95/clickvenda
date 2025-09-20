@@ -20,6 +20,11 @@ class ReceivablePaymentController extends Controller
                 'order.items.product', 
                 'order.customer', 
                 'order.user',
+                'serviceOrder.customer',
+                'serviceOrder.vehicle',
+                'serviceOrder.technicalResponsible',
+                'serviceOrder.items.product',
+                'serviceOrder.items.service',
                 'customer'
             ]);
 
@@ -102,7 +107,7 @@ class ReceivablePaymentController extends Controller
         try {
             $validated = $request->validate([
                 'amount' => 'required|numeric|min:0.01',
-                'method' => 'required|in:money,card,pix',
+                'method' => 'required|in:money,card,pix,credit',
                 'notes' => 'nullable|string|max:500'
             ]);
 
