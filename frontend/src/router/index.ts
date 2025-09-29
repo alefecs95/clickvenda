@@ -112,15 +112,15 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
-      path: '/service-orders/:id/convert',
-      name: 'service-order-convert',
-      component: () => import('@/views/ServiceOrderConvertView.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
       path: '/service-orders/payments/reports',
       name: 'service-order-payments-reports',
       component: () => import('@/views/ServiceOrderPaymentsReportView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/service-orders/:id/print',
+      name: 'service-order-print',
+      component: () => import('@/views/ServiceOrderPrintView.vue'),
       meta: { requiresAuth: true }
     },
     // Services Routes

@@ -139,6 +139,73 @@
                     >
                   </div>
                 </div>
+              </div>
+              
+              <!-- Campos de KM e Garantia -->
+              <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mt-4">
+                <!-- Campo KM do Veículo -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">KM do Veículo</label>
+                  <input 
+                    v-model="vehicleForm.mileage" 
+                    type="number" 
+                    min="0"
+                    placeholder="KM atual" 
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  >
+                </div>
+                
+                <!-- Campo Garantia Produtos (dias) -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Garantia Produtos (dias)</label>
+                  <input 
+                    v-model="form.warranty_products_days" 
+                    type="number" 
+                    min="0"
+                    placeholder="Dias de garantia" 
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  >
+                </div>
+                
+                <!-- Campo Garantia Produtos (km) -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Garantia Produtos (km)</label>
+                  <input 
+                    v-model="form.warranty_products_km" 
+                    type="number" 
+                    min="0"
+                    placeholder="KM de garantia" 
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  >
+                </div>
+                
+                <!-- Campo Garantia Serviços (dias) -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Garantia Serviços (dias)</label>
+                  <input 
+                    v-model="form.warranty_services_days" 
+                    type="number" 
+                    min="0"
+                    placeholder="Dias de garantia" 
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  >
+                </div>
+                
+                <!-- Campo Garantia Serviços (km) -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Garantia Serviços (km)</label>
+                  <input 
+                    v-model="form.warranty_services_km" 
+                    type="number" 
+                    min="0"
+                    placeholder="KM de garantia" 
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  >
+                </div>
+              </div>
+              
+              <!-- Botão para cadastrar novo veículo -->
+              <div class="text-center mt-6">
                 
               </div>
               
@@ -191,20 +258,7 @@
               <p class="text-xs text-gray-500 mt-1">Deve ser maior ou igual à data de abertura</p>
             </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Forma de Pagamento *</label>
-              <select 
-                v-model="form.payment_method" 
-                required
-                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="money">Dinheiro</option>
-                <option value="card">Cartão</option>
-                <option value="pix">PIX</option>
-                <option value="credit">A Prazo (Crédito)</option>
-                <option value="multiple">Múltiplas Formas</option>
-              </select>
-            </div>
+
           </div>
         </div>
 
@@ -305,6 +359,7 @@
                         @focus="showItemDropdown(index)"
                         @blur="hideItemDropdown(index)"
                         @click="showItemDropdown(index)"
+                        @keydown="handleItemKeydown($event, index)"
                         type="text" 
                         :placeholder="`Digite o nome do ${item.item_type === 'product' ? 'produto' : 'serviço'}...`"
                         class="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-primary-500 cursor-pointer"
@@ -332,8 +387,10 @@
                         @click="selectItemOption(index, option)"
                         @mousedown="selectItemOption(index, option)"
                         :class="[
-                          'px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors',
-                          { 'text-red-500 bg-red-50': item.item_type === 'product' && option.stock <= 0 }
+                          'px-3 py-2 border-b border-gray-100 last:border-b-0 transition-colors',
+                          option.stock <= 0 
+                            ? 'text-red-500 bg-red-50 cursor-not-allowed opacity-60' 
+                            : 'hover:bg-gray-100 cursor-pointer'
                         ]"
                       >
                         <div class="font-medium">{{ option.name }}</div>
@@ -376,11 +433,16 @@
                   <input 
                     v-model.number="item.quantity"
                     @input="calculateItemTotal(index)"
+                    @keydown="handleQuantityKeydown($event, index)"
                     type="number" 
                     min="1"
+                    :max="item.item_type === 'product' && getSelectedItemOption(item) ? getSelectedItemOption(item).stock : undefined"
                     :data-item-index="index"
                     class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   >
+                  <div v-if="item.item_type === 'product' && getSelectedItemOption(item)" class="text-xs text-gray-500 mt-1">
+                    Máximo disponível: {{ getSelectedItemOption(item).stock }}
+                  </div>
                 </div>
 
                 <div>
@@ -388,6 +450,7 @@
                   <input 
                     v-model.number="item.unit_price"
                     @input="calculateItemTotal(index)"
+                    @keydown="handlePriceKeydown($event, index)"
                     type="number" 
                     step="0.01"
                     min="0"
@@ -421,6 +484,7 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">Observações</label>
                 <input 
                   v-model="item.observations"
+                  @keydown="handleObservationsKeydown($event, index)"
                   type="text"
                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="Observações do item..."
@@ -482,6 +546,26 @@
           </div>
         </div>
 
+        <!-- Forma de Pagamento -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h2 class="text-lg font-medium text-gray-900 mb-4">Forma de Pagamento</h2>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Método de Pagamento</label>
+              <select 
+                v-model="form.payment_method"
+                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="money">Dinheiro</option>
+                <option value="card">Cartão</option>
+                <option value="pix">PIX</option>
+                <option value="credit">A Prazo</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <!-- Actions -->
         <div class="flex justify-end space-x-4">
           <button
@@ -491,6 +575,18 @@
           >
             Cancelar
           </button>
+          
+          <!-- Botão para Salvar como Orçamento -->
+          <button
+            type="button"
+            @click="submitForm('orcamento')"
+            :disabled="loading"
+            class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 disabled:opacity-50 transition-colors"
+          >
+            {{ loading ? 'Salvando...' : 'Salvar como Orçamento' }}
+          </button>
+          
+          <!-- Botão para Criar OS Direta -->
           <button
             type="submit"
             :disabled="loading"
@@ -519,50 +615,7 @@
           <div>
             <form @submit.prevent="createQuickVehicle" class="space-y-4">
               
-              <!-- Cliente (Opcional - apenas para faturamento) -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Cliente (Opcional - apenas para faturamento)</label>
-                <select
-                  v-model="quickVehicleForm.customer_id"
-                  class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  <option value="">Selecione um cliente (opcional)</option>
-                  <option v-for="customer in customers" :key="customer.id" :value="customer.id">
-                    {{ customer.name }}
-                  </option>
-                </select>
-              </div>
 
-              <!-- Informações do Cliente no Momento -->
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Nome do Cliente no Momento</label>
-                  <input
-                    v-model="quickVehicleForm.customer_name_at_time"
-                    type="text"
-                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder="Nome do cliente no momento"
-                  />
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Telefone do Cliente no Momento</label>
-                  <input
-                    v-model="quickVehicleForm.customer_phone_at_time"
-                    type="text"
-                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder="Telefone do cliente no momento"
-                  />
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Email do Cliente no Momento</label>
-                  <input
-                    v-model="quickVehicleForm.customer_email_at_time"
-                    type="email"
-                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder="Email do cliente no momento"
-                  />
-                </div>
-              </div>
 
               <!-- Tipo -->
               <div>
@@ -793,7 +846,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useServiceOrdersStore } from '@/stores/serviceOrders'
 import { useCustomersStore } from '@/stores/customers'
@@ -801,6 +854,7 @@ import { useVehiclesStore } from '@/stores/vehicles'
 import { useServicesStore } from '@/stores/services'
 import { useProductsStore } from '@/stores/products'
 import { useUsersStore } from '@/stores/users'
+import { showSuccess, showError, showWarning } from '@/utils/notifications'
 
 const router = useRouter()
 const route = useRoute()
@@ -828,10 +882,6 @@ const vehicleNotFoundPlate = ref('')
 
 // Quick forms
 const quickVehicleForm = ref({
-  customer_id: '', // Opcional - apenas para faturamento
-  customer_name_at_time: '', // Nome do cliente no momento
-  customer_phone_at_time: '', // Telefone do cliente no momento
-  customer_email_at_time: '', // Email do cliente no momento
   type: 'vehicle',
   plate: '', // Obrigatório
   make: '',
@@ -876,12 +926,16 @@ const form = ref({
   diagnosis: '',
   internal_observations: '',
   customer_observations: '',
-  payment_method: 'money',
+  payment_method: 'money', // Valor padrão
   discount_amount: 0,
   total_products: 0,
   total_services: 0,
   total_amount: 0,
   final_amount: 0,
+  warranty_products_days: null,
+  warranty_services_days: null,
+  warranty_products_km: null,
+  warranty_services_km: null,
   items: [] as any[]
 })
 
@@ -900,7 +954,8 @@ const vehicleForm = ref({
   plate: '',
   make: '',
   model: '',
-  color: ''
+  color: '',
+  mileage: null
 })
 const products = computed(() => productsStore.products)
 const services = computed(() => servicesStore.activeServices)
@@ -947,9 +1002,31 @@ const loadServiceOrder = async () => {
       total_services: serviceOrder.total_services || 0,
       total_amount: serviceOrder.total_amount || 0,
       final_amount: serviceOrder.final_amount || 0,
+      warranty_products_days: serviceOrder.warranty_products_days || null,
+      warranty_services_days: serviceOrder.warranty_services_days || null,
+      warranty_products_km: serviceOrder.warranty_products_km || null,
+      warranty_services_km: serviceOrder.warranty_services_km || null,
       items: serviceOrder.items || []
     }
     await loadAllVehicles()
+    
+    // Preencher campos do veículo se vehicle_id estiver definido
+    if (serviceOrder.vehicle_id && allVehicles.value.length > 0) {
+      const vehicle = allVehicles.value.find(v => v.id === serviceOrder.vehicle_id)
+      if (vehicle) {
+        vehicleForm.value = {
+          plate: vehicle.plate || '',
+          make: vehicle.make || vehicle.brand || '',
+          model: vehicle.model || '',
+          color: vehicle.color || '',
+          mileage: vehicle.mileage || null
+        }
+        selectedVehicle.value = vehicle
+        vehicleSearch.value = getVehicleIdentification(vehicle)
+        form.value.vehicle_id = vehicle.id
+      }
+    }
+    
     // Recalcular totais após carregar dados
     calculateTotals()
   }
@@ -1084,6 +1161,9 @@ const selectVehicle = (vehicle) => {
   form.value.vehicle_id = vehicle.id
   vehicleSearch.value = getVehicleIdentification(vehicle)
   showVehicleDropdown.value = false
+  
+  // Preencher automaticamente o campo de KM do veículo
+  vehicleForm.value.mileage = vehicle.mileage || undefined
 }
 
 const hideVehicleDropdown = () => {
@@ -1115,17 +1195,36 @@ const getFilteredItemOptions = (item) => {
   const searchTerm = item.searchTerm?.toLowerCase() || ''
   const options = getItemOptions(item.item_type)
   
-  if (searchTerm.length === 0) {
-    return options.slice(0, 15) // Mostrar mais itens quando não há busca
-  }
-  
-  return options.filter(option => 
+  let filtered = options.filter(option => 
     option.name.toLowerCase().includes(searchTerm)
   )
+  
+  // Para produtos, filtrar e ordenar por estoque
+  if (item.item_type === 'product') {
+    // Mostrar produtos com estoque > 0 primeiro, depois os sem estoque (mas destacados)
+    filtered = filtered.sort((a, b) => {
+      if (a.stock > 0 && b.stock <= 0) return -1
+      if (a.stock <= 0 && b.stock > 0) return 1
+      return 0
+    })
+  }
+  
+  if (searchTerm.length === 0) {
+    return filtered.slice(0, 15) // Mostrar mais itens quando não há busca
+  }
+  
+  return filtered
 }
 
 const selectItemOption = (index, option) => {
   const item = form.value.items[index]
+  
+  // Verificar estoque para produtos antes de selecionar
+  if (item.item_type === 'product' && option.stock <= 0) {
+    showError(`Produto "${option.name}" está esgotado! Estoque disponível: ${option.stock}`)
+    return
+  }
+  
   item.searchTerm = option.name
   
   if (item.item_type === 'product') {
@@ -1141,6 +1240,11 @@ const selectItemOption = (index, option) => {
   item.showDropdown = false
   
   calculateTotals()
+  
+  // Adicionar novo item automaticamente se este for o último
+  if (index === form.value.items.length - 1) {
+    addItem()
+  }
   
   // Focar no próximo campo
   setTimeout(() => {
@@ -1196,7 +1300,7 @@ const onItemChange = (index: number) => {
   if (option) {
     // Verificar estoque para produtos
     if (item.item_type === 'product' && option.stock <= 0) {
-      alert(`❌ Produto "${option.name}" está esgotado! Estoque disponível: ${option.stock}`)
+      showError(`Produto "${option.name}" está esgotado! Estoque disponível: ${option.stock}`)
       item.product_id = ''
       return
     }
@@ -1215,8 +1319,110 @@ const calculateItemTotal = (index: number) => {
   const item = form.value.items[index]
   const quantity = item.quantity || 0
   const unitPrice = item.unit_price || 0
+  
+  // Verificar estoque para produtos
+  if (item.item_type === 'product' && item.product_id) {
+    const product = products.value.find(p => p.id === item.product_id)
+    if (product && quantity > product.stock) {
+      showError(`Quantidade solicitada (${quantity}) excede o estoque disponível (${product.stock}) para "${product.name}"`)
+      item.quantity = Math.min(quantity, product.stock)
+      return calculateItemTotal(index) // Recalcular com a quantidade corrigida
+    }
+  }
+  
   item.total_price = quantity * unitPrice
   calculateTotals()
+  
+  // Adicionar novo item automaticamente se este for o último e estiver completo
+  if (index === form.value.items.length - 1 && isItemComplete(item)) {
+    addItem()
+  }
+}
+
+// Função para verificar se um item está completo
+const isItemComplete = (item) => {
+  const hasSelectedItem = item.item_type === 'product' ? item.product_id : item.service_id
+  return hasSelectedItem && item.quantity > 0 && item.unit_price > 0
+}
+
+// Funções de navegação por teclado
+const handleItemKeydown = (event, index) => {
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    const filteredOptions = getFilteredItemOptions(index)
+    if (filteredOptions.length > 0) {
+      selectItemOption(index, filteredOptions[0])
+    }
+  } else if (event.key === 'Tab') {
+    // Permitir navegação normal com Tab
+    return
+  } else if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    showItemDropdown(index)
+  }
+}
+
+const handleQuantityKeydown = (event, index) => {
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    focusNextField(index, 'price')
+  } else if (event.key === 'Tab' && !event.shiftKey) {
+    // Tab normal - vai para o próximo campo
+    return
+  }
+}
+
+const handlePriceKeydown = (event, index) => {
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    const item = form.value.items[index]
+    if (isItemComplete(item) && index === form.value.items.length - 1) {
+      addItem()
+      setTimeout(() => focusNextField(index + 1, 'search'), 100)
+    } else {
+      focusNextField(index, 'observations')
+    }
+  }
+}
+
+const handleObservationsKeydown = (event, index) => {
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    const item = form.value.items[index]
+    if (isItemComplete(item)) {
+      if (index === form.value.items.length - 1) {
+        addItem()
+        setTimeout(() => focusNextField(index + 1, 'search'), 100)
+      } else {
+        focusNextField(index + 1, 'search')
+      }
+    }
+  }
+}
+
+const focusNextField = (index, fieldType) => {
+  setTimeout(() => {
+    let selector = ''
+    switch (fieldType) {
+      case 'search':
+        selector = `input[placeholder*="Digite o nome do"]`
+        break
+      case 'quantity':
+        selector = `input[data-item-index="${index}"]`
+        break
+      case 'price':
+        selector = `input[type="number"][step="0.01"]`
+        break
+      case 'observations':
+        selector = `input[placeholder="Observações do item..."]`
+        break
+    }
+    
+    const inputs = document.querySelectorAll(selector)
+    if (inputs[index]) {
+      inputs[index].focus()
+    }
+  }, 100)
 }
 
 const validateDeliveryDate = () => {
@@ -1225,7 +1431,7 @@ const validateDeliveryDate = () => {
     const expectedDate = new Date(form.value.expected_delivery_date)
     
     if (expectedDate < openingDate) {
-      alert('❌ A data de previsão de entrega deve ser maior ou igual à data de abertura!')
+      showError('A data de previsão de entrega deve ser maior ou igual à data de abertura!')
       form.value.expected_delivery_date = form.value.opening_date
     }
   }
@@ -1267,6 +1473,7 @@ const searchVehicleByPlate = async () => {
       vehicleForm.value.make = foundVehicle.make || ''
       vehicleForm.value.model = foundVehicle.model || ''
       vehicleForm.value.color = foundVehicle.color || ''
+      vehicleForm.value.mileage = foundVehicle.mileage || undefined
       selectedVehicle.value = foundVehicle
       form.value.vehicle_id = foundVehicle.id
       
@@ -1308,11 +1515,23 @@ const retryVehicleSearch = () => {
   }, 100)
 }
 
-const createNewVehicleFromNotFound = () => {
+const createNewVehicleFromNotFound = async () => {
+  console.log('createNewVehicleFromNotFound chamada')
+  console.log('vehicleNotFoundPlate.value:', vehicleNotFoundPlate.value)
+  
+  const plateToSet = vehicleNotFoundPlate.value
+  console.log('plateToSet:', plateToSet)
+  
   closeVehicleNotFoundModal()
   showVehicleModal.value = true
+  
+  // Usar nextTick para garantir que o modal seja renderizado antes de preencher
+  await nextTick()
+  
   // Preencher a placa no modal de cadastro
-  quickVehicleForm.value.plate = vehicleNotFoundPlate.value
+  quickVehicleForm.value.plate = plateToSet
+  console.log('quickVehicleForm.value.plate após atribuição:', quickVehicleForm.value.plate)
+  console.log('quickVehicleForm.value completo:', quickVehicleForm.value)
 }
 
 
@@ -1371,34 +1590,62 @@ const calculateTotals = () => {
   form.value.final_amount = Math.max(0, form.value.total_amount - (form.value.discount_amount || 0))
 }
 
-const submitForm = async () => {
+const submitForm = async (billingType = 'avista') => {
+  // Se billingType é um evento (quando chamado via @submit.prevent), usar valor padrão
+  if (typeof billingType === 'object' && billingType.type) {
+    billingType = 'avista'
+  }
   loading.value = true
   
   try {
+    // Validação obrigatória do veículo
+    if (!form.value.vehicle_id || !vehicleForm.value.plate) {
+      showError('É obrigatório selecionar um veículo para criar a OS. Por favor, insira uma placa válida.')
+      loading.value = false
+      return
+    }
+    
     // Limpar dados antes de enviar - remover campos null desnecessários
     const cleanedForm = { ...form.value }
+    
+    // Adicionar billing_type baseado no botão clicado
+    cleanedForm.billing_type = billingType
+    
+    // Garantir que os campos de garantia sejam incluídos mesmo se forem null
+    cleanedForm.warranty_products_km = form.value.warranty_products_km
+    cleanedForm.warranty_services_km = form.value.warranty_services_km
     
     // Converter customer_id vazio para null
     if (cleanedForm.customer_id === '') {
       cleanedForm.customer_id = null
     }
     
-    // Limpar items - remover campos null
-    cleanedForm.items = form.value.items.map(item => {
-      const cleanedItem = { ...item }
-      
-      // Se é produto, remover service_id
-      if (item.item_type === 'product') {
-        delete cleanedItem.service_id
-      }
-      
-      // Se é serviço, remover product_id
-      if (item.item_type === 'service') {
-        delete cleanedItem.product_id
-      }
-      
-      return cleanedItem
-    })
+    // Limpar items - remover campos null e filtrar itens vazios
+    cleanedForm.items = form.value.items
+      .filter(item => {
+        // Filtrar apenas itens que têm product_id ou service_id válidos
+        const hasValidProduct = item.item_type === 'product' && item.product_id
+        const hasValidService = item.item_type === 'service' && item.service_id
+        return hasValidProduct || hasValidService
+      })
+      .map(item => {
+        const cleanedItem = { ...item }
+        
+        // Se é produto, remover service_id
+        if (item.item_type === 'product') {
+          delete cleanedItem.service_id
+        }
+        
+        // Se é serviço, remover product_id
+        if (item.item_type === 'service') {
+          delete cleanedItem.product_id
+        }
+        
+        return cleanedItem
+      })
+    
+    // Adicionar KM do veículo ao formulário
+    cleanedForm.vehicle_mileage = vehicleForm.value.mileage || null
     
         // Validação de datas
         if (cleanedForm.expected_delivery_date && cleanedForm.opening_date) {
@@ -1406,7 +1653,7 @@ const submitForm = async () => {
           const expectedDate = new Date(cleanedForm.expected_delivery_date)
           
           if (expectedDate < openingDate) {
-            alert('❌ A data de previsão de entrega deve ser maior ou igual à data de abertura!')
+            showError('A data de previsão de entrega deve ser maior ou igual à data de abertura!')
             return
           }
         }
@@ -1417,7 +1664,7 @@ const submitForm = async () => {
           const total = cleanedForm.final_amount
           
           if (available < total) {
-            alert(`❌ Cliente não possui crédito suficiente!\n\nCrédito disponível: ${formatCurrency(available)}\nValor necessário: ${formatCurrency(total)}`)
+            showError(`Cliente não possui crédito suficiente!\n\nCrédito disponível: ${formatCurrency(available)}\nValor necessário: ${formatCurrency(total)}`)
             return
           }
         }
@@ -1425,6 +1672,11 @@ const submitForm = async () => {
     console.log('=== ENVIANDO DADOS PARA CRIAR OS ===')
     console.log('Form data:', cleanedForm)
     console.log('Items:', cleanedForm.items)
+    console.log('Billing Type:', billingType)
+    console.log('Problem Description:', cleanedForm.problem_description)
+    console.log('Problem Description Length:', cleanedForm.problem_description ? cleanedForm.problem_description.length : 'null/undefined')
+    console.log('Garantia Produtos KM:', cleanedForm.warranty_products_km)
+    console.log('Garantia Serviços KM:', cleanedForm.warranty_services_km)
     
     const result = isEdit.value 
       ? await serviceOrdersStore.updateServiceOrder(Number(route.params.id), cleanedForm)
@@ -1435,7 +1687,7 @@ const submitForm = async () => {
     if (result.success) {
       router.push('/service-orders')
     } else {
-      alert(result.error)
+      showError(result.error)
     }
   } finally {
     loading.value = false
@@ -1450,16 +1702,16 @@ const getVehicleIdentification = (vehicle: any) => {
 // Funções do modal de veículos
 const openVehicleModal = () => {
   showVehicleModal.value = true
+  // Preencher automaticamente o campo placa com o valor atual
+  if (vehicleForm.value.plate) {
+    quickVehicleForm.value.plate = vehicleForm.value.plate
+  }
 }
 
 const closeVehicleModal = () => {
   showVehicleModal.value = false
   // Limpar formulário
   quickVehicleForm.value = {
-    customer_id: '',
-    customer_name_at_time: '',
-    customer_phone_at_time: '',
-    customer_email_at_time: '',
     type: 'vehicle',
     plate: '',
     make: '',
@@ -1481,13 +1733,24 @@ const createQuickVehicle = async () => {
   vehicleLoading.value = true
   
   try {
-    // Limpar dados vazios
+    // Validar campos obrigatórios no frontend
+    if (!quickVehicleForm.value.plate || !quickVehicleForm.value.model) {
+      showError('Placa e Modelo são obrigatórios')
+      return
+    }
+    
+    // Limpar dados vazios, mas manter campos obrigatórios
     const cleanData = { ...quickVehicleForm.value }
     Object.keys(cleanData).forEach(key => {
       if (cleanData[key] === '' || cleanData[key] === null) {
-        cleanData[key] = null
+        // Não limpar campos obrigatórios
+        if (key !== 'plate' && key !== 'model') {
+          cleanData[key] = null
+        }
       }
     })
+    
+    console.log('Dados sendo enviados para API:', cleanData)
     
     const result = await vehiclesStore.createVehicle(cleanData)
     
@@ -1504,26 +1767,10 @@ const createQuickVehicle = async () => {
       
       // Fechar modal e limpar formulário
       closeVehicleModal()
-      quickVehicleForm.value = {
-        customer_id: '',
-        customer_name_at_time: '',
-        customer_phone_at_time: '',
-        customer_email_at_time: '',
-        type: 'vehicle',
-        plate: '',
-        make: '',
-        model: '',
-        year: '',
-        color: '',
-        chassis_number: '',
-        engine_number: '',
-        notes: '',
-        active: true
-      }
       
       // Silencioso - sem alert
     } else {
-      alert(result.error)
+      showError(result.error)
     }
   } finally {
     vehicleLoading.value = false
@@ -1539,12 +1786,40 @@ const createQuickService = async () => {
     if (result.success) {
       // Atualizar lista de serviços
       await servicesStore.fetchServices()
+      await servicesStore.fetchActiveServices()
       
       // Encontrar o item atual que está sendo editado e selecionar o novo serviço
-      const currentItemIndex = form.value.items.findIndex(item => 
+      let currentItemIndex = form.value.items.findIndex(item => 
         item.item_type === 'service' && !item.service_id
       )
       
+      // Se não encontrou um item de serviço vazio, procurar o último item de serviço
+      if (currentItemIndex === -1) {
+        // Procurar pelo último item de serviço adicionado
+        for (let i = form.value.items.length - 1; i >= 0; i--) {
+          if (form.value.items[i].item_type === 'service') {
+            currentItemIndex = i
+            break
+          }
+        }
+      }
+      
+      // Se ainda não encontrou, criar um novo item de serviço
+      if (currentItemIndex === -1) {
+        form.value.items.push({
+          item_type: 'service',
+          service_id: '',
+          product_id: '',
+          description: '',
+          quantity: 1,
+          unit_price: 0,
+          total_price: 0,
+          observations: ''
+        })
+        currentItemIndex = form.value.items.length - 1
+      }
+      
+      // Selecionar o novo serviço no item encontrado/criado
       if (currentItemIndex !== -1) {
         form.value.items[currentItemIndex].service_id = result.service.id
         form.value.items[currentItemIndex].unit_price = result.service.price
@@ -1562,7 +1837,7 @@ const createQuickService = async () => {
         active: true
       }
     } else {
-      alert(result.error)
+      showError(result.error)
     }
   } finally {
     serviceLoading.value = false

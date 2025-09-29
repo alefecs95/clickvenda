@@ -115,9 +115,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Ordens de Serviço
     Route::prefix('service-orders')->group(function () {
         Route::get('/statistics', [ServiceOrderController::class, 'statistics']);
+        Route::get('/{serviceOrder}/print', [ServiceOrderController::class, 'printOrder']);
         Route::post('/{serviceOrder}/approve', [ServiceOrderController::class, 'approve']);
+        Route::post('/{serviceOrder}/approve-customer', [ServiceOrderController::class, 'approveCustomer']);
         Route::post('/{serviceOrder}/complete', [ServiceOrderController::class, 'complete']);
-        Route::post('/{serviceOrder}/convert-to-order', [ServiceOrderController::class, 'convertToOrder']);
         
         // Rotas para pagamentos de OS
         Route::get('/{serviceOrder}/payments', [App\Http\Controllers\ServiceOrderPaymentController::class, 'index']);

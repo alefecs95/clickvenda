@@ -46,6 +46,17 @@ class Product extends Model
         'vasilhame_model_id' => 'integer',
     ];
 
+    protected $appends = ['stock'];
+
+    /**
+     * Accessor para compatibilidade com o frontend
+     * Retorna o estoque real do produto
+     */
+    public function getStockAttribute(): int
+    {
+        return $this->getActualStock();
+    }
+
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class);

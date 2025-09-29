@@ -254,7 +254,14 @@
                       @click="approveServiceOrder(serviceOrder.id)"
                       class="text-green-600 hover:text-green-900"
                     >
-                      Aprovar
+                      Aprovar e Iniciar
+                    </button>
+                    <button
+                      v-if="canApproveCustomer(serviceOrder)"
+                      @click="approveCustomerServiceOrder(serviceOrder.id)"
+                      class="text-yellow-600 hover:text-yellow-900"
+                    >
+                      Aprovar Orçamento
                     </button>
                     <button
                       v-if="canComplete(serviceOrder)"
@@ -262,13 +269,6 @@
                       class="text-blue-600 hover:text-blue-900"
                     >
                       Concluir
-                    </button>
-                    <button
-                      v-if="canConvert(serviceOrder)"
-                      @click="convertServiceOrder(serviceOrder.id)"
-                      class="text-purple-600 hover:text-purple-900"
-                    >
-                      Converter
                     </button>
                     <button
                       v-if="canCancel(serviceOrder)"
@@ -397,9 +397,23 @@ const viewServiceOrder = (id: number) => {
 }
 
 const approveServiceOrder = async (id: number) => {
-  if (confirm('Deseja aprovar esta ordem de serviço?')) {
+  if (confirm('Deseja aprovar e iniciar esta ordem de serviço?')) {
     const result = await serviceOrdersStore.approveServiceOrder(id)
     if (result.success) {
+      loadServiceOrders()
+      loadStatistics()
+    } else {
+      alert(result.error)
+    }
+  }
+}
+
+const approveCustomerServiceOrder = async (id: number) => {
+  const notes = prompt('Observações sobre a aprovação do orçamento (opcional):')
+  if (notes !== null) { // null significa que o usuário cancelou
+    const result = await serviceOrdersStore.approveCustomerServiceOrder(id, notes || undefined)
+    if (result.success) {
+      alert('Orçamento aprovado pelo cliente com sucesso!')
       loadServiceOrders()
       loadStatistics()
     } else {
@@ -418,10 +432,6 @@ const completeServiceOrder = async (id: number) => {
       alert(result.error)
     }
   }
-}
-
-const convertServiceOrder = (id: number) => {
-  router.push(`/service-orders/${id}/convert`)
 }
 
 const cancelServiceOrder = async (id: number) => {
@@ -547,12 +557,12 @@ const canApprove = (serviceOrder: any) => {
   return serviceOrder.status === 'aguardando_aprovacao'
 }
 
-const canComplete = (serviceOrder: any) => {
-  return ['aberta', 'em_andamento'].includes(serviceOrder.status)
+const canApproveCustomer = (serviceOrder: any) => {
+  return serviceOrder.billing_type === 'orcamento' && !serviceOrder.customer_approved
 }
 
-const canConvert = (serviceOrder: any) => {
-  return serviceOrder.billing_type === 'orcamento' && serviceOrder.customer_approved
+const canComplete = (serviceOrder: any) => {
+  return ['aberta', 'em_andamento'].includes(serviceOrder.status)
 }
 
 const canCancel = (serviceOrder: any) => {

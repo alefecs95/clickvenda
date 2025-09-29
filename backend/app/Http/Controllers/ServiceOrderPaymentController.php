@@ -54,6 +54,24 @@ class ServiceOrderPaymentController extends Controller
             ], 422);
         }
 
+        // Validação específica para pagamento a prazo (credit)
+        if ($request->payment_method === 'credit') {
+            if (!$serviceOrder->customer_id) {
+                return response()->json([
+                    'message' => 'É necessário ter um cliente vinculado para pagamentos a prazo.'
+                ], 422);
+            }
+
+            $customer = $serviceOrder->customer;
+            if (!$customer->hasCreditFor($request->amount)) {
+                return response()->json([
+                    'message' => "Cliente não possui crédito suficiente. Disponível: R$ " . 
+                               number_format($customer->getAvailableCredit(), 2, ',', '.') . 
+                               ", Necessário: R$ " . number_format($request->amount, 2, ',', '.')
+                ], 422);
+            }
+        }
+
         DB::beginTransaction();
         
         try {
@@ -66,6 +84,26 @@ class ServiceOrderPaymentController extends Controller
                 'user_id' => Auth::user()->id,
                 'paid_at' => $request->paid_at ?? now()
             ]);
+
+            // Se for pagamento a prazo, criar conta a receber e atualizar crédito usado
+            if ($request->payment_method === 'credit' && $serviceOrder->customer_id) {
+                $dueDate = now()->addDays(30); // TODO: Usar configuração da loja
+                
+                \App\Models\ReceivablePayment::create([
+                    'service_order_id' => $serviceOrder->id,
+                    'customer_id' => $serviceOrder->customer_id,
+                    'total_receivable_amount' => $request->amount,
+                    'paid_amount' => 0,
+                    'remaining_amount' => $request->amount,
+                    'due_date' => $dueDate,
+                    'status' => 'pending'
+                ]);
+
+                // Atualizar crédito usado do cliente
+                $customer = $serviceOrder->customer;
+                $customer->credit_used += $request->amount;
+                $customer->save();
+            }
 
             // Atualizar status da OS se totalmente paga
             if ($serviceOrder->isFullyPaid()) {

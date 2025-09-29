@@ -190,7 +190,7 @@
                 <div class="flex-1">
                   <div class="font-medium text-gray-900">{{ receivable.customer?.name || 'Cliente não identificado' }}</div>
                   <button
-                    @click="openOrderDetails(receivable.order || receivable.serviceOrder)"
+                    @click="openOrderDetails(receivable.order || receivable.service_order)"
                     class="text-xs font-medium text-primary-600 hover:text-primary-800 hover:underline"
                   >
                     #{{ getOrderNumber(receivable) }}
@@ -309,7 +309,7 @@
                   <div class="text-sm font-medium text-gray-900">{{ receivable.customer?.name || 'Cliente não identificado' }}</div>
                   <div class="text-xs text-gray-500">
                     <button
-                      @click="openOrderDetails(receivable.order || receivable.serviceOrder)"
+                      @click="openOrderDetails(receivable.order || receivable.service_order)"
                       class="font-medium text-primary-600 hover:text-primary-800 hover:underline"
                     >
                       #{{ getOrderNumber(receivable) }}
@@ -437,16 +437,16 @@
               <h4 class="font-semibold text-gray-900 mb-2">Informações da Venda</h4>
               <div class="space-y-2 text-sm">
                 <div class="flex justify-between">
-                  <span class="text-gray-600">{{ selectedReceivable.serviceOrder ? 'OS:' : 'Pedido:' }}</span>
+                  <span class="text-gray-600">{{ selectedReceivable.service_order ? 'OS:' : 'Pedido:' }}</span>
                   <button
-                    @click="openOrderDetails(selectedReceivable.order || selectedReceivable.serviceOrder)"
+                    @click="openOrderDetails(selectedReceivable.order || selectedReceivable.service_order)"
                     class="font-medium text-primary-600 hover:text-primary-800 hover:underline"
                   >
                     #{{ getOrderNumber(selectedReceivable) }}
                   </button>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-600">{{ selectedReceivable.serviceOrder ? 'Data da OS:' : 'Data da venda:' }}</span>
+                  <span class="text-gray-600">{{ selectedReceivable.service_order ? 'Data da OS:' : 'Data da venda:' }}</span>
                   <span class="font-medium">{{ formatDate(selectedReceivable.created_at) }}</span>
                 </div>
                 <div class="flex justify-between">
@@ -473,7 +473,7 @@
               <h4 class="font-semibold text-gray-900 mb-2">Valores</h4>
               <div class="space-y-2 text-sm">
                 <div class="flex justify-between">
-                  <span class="text-gray-600">{{ selectedReceivable.serviceOrder ? 'Total da OS:' : 'Total da venda:' }}</span>
+                  <span class="text-gray-600">{{ selectedReceivable.service_order ? 'Total da OS:' : 'Total da venda:' }}</span>
                   <span class="font-medium">R$ {{ formatPrice(getOrderAmount(selectedReceivable)) }}</span>
                 </div>
                 <div class="flex justify-between">
@@ -508,47 +508,59 @@
 
           <!-- Formas de Pagamento -->
           <div class="space-y-4">
-            <div>
-              <h4 class="font-semibold text-gray-900 mb-2">Formas de Pagamento</h4>
-              <div v-if="selectedReceivable.payment_methods" class="space-y-2">
-                <div
-                  v-for="(payment, index) in selectedReceivable.payment_methods"
-                  :key="index"
-                  class="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
-                >
-                  <div class="flex items-center">
-                    <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-                    </svg>
-                    <span class="text-sm font-medium">{{ getPaymentMethodText(payment.method) }}</span>
-                  </div>
-                  <span class="text-sm font-bold" :class="payment.method === 'credit' ? 'text-primary-600' : 'text-gray-900'">
-                    R$ {{ formatPrice(payment.amount) }}
-                  </span>
-                </div>
-              </div>
-              <div v-else class="p-3 bg-gray-50 rounded-lg">
-                <div class="flex justify-between items-center">
-                  <span class="text-sm font-medium">{{ getPaymentMethodText(selectedReceivable.payment_method) }}</span>
-                  <span class="text-sm font-bold text-primary-600">R$ {{ formatPrice(selectedReceivable.final_amount) }}</span>
-                </div>
-              </div>
-            </div>
-
             <!-- Itens da Venda -->
             <div>
-              <h4 class="font-semibold text-gray-900 mb-2">Itens da Venda</h4>
+              <h4 class="font-semibold text-gray-900 mb-2">
+                {{ selectedReceivable.service_order_id ? 'Itens da OS' : 'Itens da Venda' }}
+              </h4>
+              
               <div class="space-y-2 max-h-48 overflow-y-auto">
                 <div
-                  v-for="item in selectedReceivable.items"
+                  v-for="item in (selectedReceivable.service_order?.items || selectedReceivable.order?.items || [])"
                   :key="item.id"
                   class="flex justify-between items-center p-2 bg-gray-50 rounded"
                 >
-                  <div>
-                    <div class="text-sm font-medium">{{ item.product?.name }}</div>
-                    <div class="text-xs text-gray-500">{{ item.quantity }} × R$ {{ formatPrice(item.unit_price) }}</div>
+                  <div class="flex items-center space-x-2">
+                    <!-- Ícone do tipo de item -->
+                    <div class="flex-shrink-0">
+                      <svg v-if="item.item_type === 'product'" class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                      </svg>
+                      <svg v-else class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                      </svg>
+                    </div>
+                    
+                    <div>
+                      <div class="text-sm font-medium">
+                        {{ item.product?.name || item.service?.name || item.description }}
+                      </div>
+                      <div class="text-xs text-gray-500">
+                        {{ item.quantity }} × R$ {{ formatPrice(item.unit_price) }}
+                      </div>
+                      
+                      <!-- Categoria para produtos -->
+                      <div v-if="item.item_type === 'product' && item.product?.category" class="mt-1">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                          {{ item.product.category }}
+                        </span>
+                      </div>
+                      
+                      <!-- Observações para serviços -->
+                      <div v-if="item.item_type === 'service' && item.observations" class="mt-1">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                          {{ item.observations }}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                   <div class="text-sm font-medium">R$ {{ formatPrice(item.total_price) }}</div>
+                </div>
+                
+                <!-- Mensagem quando não há itens -->
+                <div v-if="!(selectedReceivable.service_order?.items || selectedReceivable.order?.items || []).length" class="text-center py-4 text-gray-500">
+                  Nenhum item encontrado
                 </div>
               </div>
             </div>
@@ -610,8 +622,13 @@
               <span class="font-medium">{{ selectedReceivable.customer?.name }}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-gray-600">{{ selectedReceivable.serviceOrder ? 'OS:' : 'Pedido:' }}</span>
-              <span class="font-medium">#{{ getOrderNumber(selectedReceivable) }}</span>
+              <span class="text-gray-600">{{ selectedReceivable.service_order ? 'OS:' : 'Pedido:' }}</span>
+              <button
+                @click="openOrderDetails(selectedReceivable.order || selectedReceivable.service_order)"
+                class="font-medium text-primary-600 hover:text-primary-800 hover:underline"
+              >
+                #{{ getOrderNumber(selectedReceivable) }}
+              </button>
             </div>
             <div class="flex justify-between">
               <span class="text-gray-600">Valor total a receber:</span>
@@ -693,7 +710,7 @@
         <div class="flex justify-between items-center mb-4 sm:mb-6">
           <h3 class="text-lg sm:text-xl font-bold text-gray-900">
             {{ selectedOrder.order_number ? 'Detalhes da Venda' : 'Detalhes da OS' }} 
-            #{{ selectedOrder.order_number || selectedOrder.os_number }}
+            #{{ selectedOrder.order_number }}
           </h3>
           <button
             @click="showOrderModal = false"
@@ -706,22 +723,22 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          <!-- Informações da Venda -->
+          <!-- Informações da Venda/OS -->
           <div class="space-y-4">
             <div class="bg-gray-50 rounded-lg p-4">
               <h4 class="font-semibold text-gray-900 mb-3">Informações Gerais</h4>
               <div class="space-y-2 text-sm">
                 <div class="flex justify-between">
-                  <span class="text-gray-600">Número do Pedido:</span>
+                  <span class="text-gray-600">{{ selectedOrder.order_number ? 'Número do Pedido:' : 'Número da OS:' }}</span>
                   <span class="font-medium">#{{ selectedOrder.order_number }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-600">Data da Venda:</span>
-                  <span class="font-medium">{{ formatDate(selectedOrder.created_at) }}</span>
+                  <span class="text-gray-600">{{ selectedOrder.order_number ? 'Data da Venda:' : 'Data de Abertura:' }}</span>
+                  <span class="font-medium">{{ formatDate(selectedOrder.created_at || selectedOrder.opening_date) }}</span>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-600">Hora:</span>
-                  <span class="font-medium">{{ formatTime(selectedOrder.created_at) }}</span>
+                  <span class="font-medium">{{ formatTime(selectedOrder.created_at || selectedOrder.opening_date) }}</span>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-600">Cliente:</span>
@@ -735,20 +752,28 @@
                   <span class="text-gray-600">Email:</span>
                   <span class="font-medium">{{ selectedOrder.customer.email }}</span>
                 </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-600">Vendedor:</span>
-                  <span class="font-medium">{{ selectedOrder.user?.name || 'Sistema' }}</span>
+                <div v-if="selectedOrder.vehicle" class="flex justify-between">
+                  <span class="text-gray-600">Veículo:</span>
+                  <span class="font-medium">{{ selectedOrder.vehicle.plate }} - {{ selectedOrder.vehicle.make }} {{ selectedOrder.vehicle.model }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-600">Status do Pedido:</span>
-                  <span class="font-medium" :class="selectedOrder.status === 'completed' ? 'text-green-600' : 'text-orange-600'">
-                    {{ selectedOrder.status === 'completed' ? 'Finalizado' : 'Pendente' }}
+                  <span class="text-gray-600">{{ selectedOrder.order_number ? 'Vendedor:' : 'Responsável Técnico:' }}</span>
+                  <span class="font-medium">{{ selectedOrder.user?.name || selectedOrder.technical_responsible?.name || 'Sistema' }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">{{ selectedOrder.order_number ? 'Status do Pedido:' : 'Status da OS:' }}</span>
+                  <span class="font-medium" :class="selectedOrder.status === 'completed' || selectedOrder.status === 'concluida' ? 'text-green-600' : 'text-orange-600'">
+                    {{ selectedOrder.status === 'completed' || selectedOrder.status === 'concluida' ? 'Finalizado' : 'Pendente' }}
                   </span>
+                </div>
+                <div v-if="selectedOrder.expected_delivery_date" class="flex justify-between">
+                  <span class="text-gray-600">Previsão de Entrega:</span>
+                  <span class="font-medium">{{ formatDate(selectedOrder.expected_delivery_date) }}</span>
                 </div>
               </div>
             </div>
 
-            <!-- Formas de Pagamento da Venda -->
+            <!-- Formas de Pagamento da Venda/OS -->
             <div class="bg-blue-50 rounded-lg p-4">
               <h4 class="font-semibold text-gray-900 mb-3">Formas de Pagamento</h4>
               <div v-if="selectedOrder.payment_methods" class="space-y-2">
@@ -771,18 +796,24 @@
               </div>
             </div>
 
-            <!-- Observações da Venda -->
-            <div v-if="selectedOrder.notes" class="bg-yellow-50 rounded-lg p-4">
-              <h4 class="font-semibold text-gray-900 mb-2">Observações da Venda</h4>
-              <p class="text-sm text-gray-700 italic">"{{ selectedOrder.notes }}"</p>
+            <!-- Observações da Venda/OS -->
+            <div v-if="selectedOrder.notes || selectedOrder.problem_description" class="bg-yellow-50 rounded-lg p-4">
+              <h4 class="font-semibold text-gray-900 mb-2">{{ selectedOrder.order_number ? 'Observações da Venda' : 'Descrição do Problema' }}</h4>
+              <p class="text-sm text-gray-700 italic">"{{ selectedOrder.notes || selectedOrder.problem_description }}"</p>
+            </div>
+
+            <!-- Diagnóstico (apenas para OS) -->
+            <div v-if="selectedOrder.diagnosis" class="bg-green-50 rounded-lg p-4">
+              <h4 class="font-semibold text-gray-900 mb-2">Diagnóstico</h4>
+              <p class="text-sm text-gray-700 italic">"{{ selectedOrder.diagnosis }}"</p>
             </div>
           </div>
 
-          <!-- Itens da Venda -->
+          <!-- Itens da Venda/OS -->
           <div class="space-y-4">
             <div class="bg-gray-50 rounded-lg p-4">
               <h4 class="font-semibold text-gray-900 mb-3">
-                Itens da Venda 
+                {{ selectedOrder.order_number ? 'Itens da Venda' : 'Itens da OS' }}
                 <span class="text-sm text-gray-500">({{ selectedOrder.items?.length || 0 }} itens)</span>
               </h4>
               
@@ -800,12 +831,44 @@
                   class="flex justify-between items-start p-3 bg-white rounded border hover:shadow-sm transition-shadow"
                 >
                   <div class="flex-1">
-                    <h5 class="font-semibold text-gray-900">{{ item.product?.name || `Produto ID: ${item.product_id}` }}</h5>
+                    <!-- Tipo do Item -->
+                    <div class="flex items-center gap-2 mb-2">
+                      <span 
+                        v-if="item.item_type === 'product' || item.product_id"
+                        class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800"
+                      >
+                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M10 2L3 7v11a1 1 0 001 1h12a1 1 0 001-1V7l-7-5zM10 12a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                        </svg>
+                        Produto
+                      </span>
+                      <span 
+                        v-else-if="item.item_type === 'service' || item.service_id"
+                        class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"
+                      >
+                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path>
+                        </svg>
+                        Serviço
+                      </span>
+                    </div>
+                    
+                    <h5 class="font-semibold text-gray-900">
+                      {{ item.product?.name || item.service?.name || item.description || `Item ID: ${item.product_id || item.service_id}` }}
+                    </h5>
+                    
                     <div class="text-xs text-gray-600 mt-1 space-x-2">
                       <span v-if="item.product?.sku">SKU: {{ item.product.sku }}</span>
                       <span v-if="item.product?.returnable" class="text-orange-600 font-medium">• Retornável</span>
                       <span v-if="item.product?.available === false" class="text-red-600 font-medium">• Indisponível</span>
+                      <span v-if="item.service?.category" class="text-purple-600 font-medium">• {{ item.service.category }}</span>
                     </div>
+                    
+                    <!-- Observações do item (para serviços) -->
+                    <div v-if="item.observations" class="text-xs text-gray-600 mt-1 italic">
+                      "{{ item.observations }}"
+                    </div>
+                    
                     <div class="text-sm text-gray-700 mt-2 bg-gray-50 rounded px-2 py-1">
                       <span class="font-medium">{{ item.quantity }}</span> 
                       <span class="text-gray-500">×</span> 
@@ -954,8 +1017,8 @@ const getPaymentMethodText = (method: string) => {
 const getOrderNumber = (receivable: any) => {
   if (receivable.order) {
     return receivable.order.order_number || 'N/A'
-  } else if (receivable.serviceOrder) {
-    return receivable.serviceOrder.order_number || 'N/A'
+  } else if (receivable.service_order) {
+    return receivable.service_order.order_number || 'N/A'
   }
   return 'N/A'
 }
@@ -963,8 +1026,8 @@ const getOrderNumber = (receivable: any) => {
 const getOrderAmount = (receivable: any) => {
   if (receivable.order) {
     return receivable.order.final_amount || 0
-  } else if (receivable.serviceOrder) {
-    return receivable.serviceOrder.final_amount || 0
+  } else if (receivable.service_order) {
+    return receivable.service_order.final_amount || 0
   }
   return 0
 }
@@ -972,8 +1035,8 @@ const getOrderAmount = (receivable: any) => {
 const getOrderDiscount = (receivable: any) => {
   if (receivable.order) {
     return receivable.order.discount_amount || 0
-  } else if (receivable.serviceOrder) {
-    return receivable.serviceOrder.discount_amount || 0
+  } else if (receivable.service_order) {
+    return receivable.service_order.discount_amount || 0
   }
   return 0
 }
@@ -1106,10 +1169,30 @@ const openOrderDetails = (order: any) => {
     return
   }
   
-  console.log('Order details:', order)
+  // Se for uma ordem de serviço, redirecionar para a página de detalhes da OS
+  if (!order.order_number && order.id) {
+    router.push(`/service-orders/${order.id}`)
+    return
+  }
+  
+  // Se for um pedido, redirecionar para a página de detalhes do pedido
+  if (order.order_number && order.id) {
+    router.push(`/orders/${order.id}`)
+    return
+  }
+  
+  console.log('=== DEBUG ORDER DETAILS ===')
+  console.log('Order object:', order)
+  console.log('Order type:', order.order_number ? 'SALE' : 'SERVICE_ORDER')
+  console.log('Order number:', order.order_number)
   console.log('Order items:', order.items)
   console.log('Order customer:', order.customer)
   console.log('Order user:', order.user)
+  console.log('Order vehicle:', order.vehicle)
+  console.log('Order technical_responsible:', order.technical_responsible)
+  console.log('Order status:', order.status)
+  console.log('Order final_amount:', order.final_amount)
+  console.log('=== END DEBUG ===')
   
   selectedOrder.value = order
   showOrderModal.value = true
@@ -1229,16 +1312,16 @@ const printOrderDetails = () => {
           </div>
         </div>
 
-        <!-- Informações do Pedido -->
+        <!-- Informações do Pedido/OS -->
         <div class="section">
-          <div class="section-title">Informações da Venda</div>
+          <div class="section-title">${order.order_number ? 'Informações da Venda' : 'Informações da OS'}</div>
           <div class="info-row">
-            <span class="info-label">Número do Pedido:</span>
+            <span class="info-label">${order.order_number ? 'Número do Pedido:' : 'Número da OS:'}</span>
             <span>#${order.order_number}</span>
           </div>
           <div class="info-row">
-            <span class="info-label">Data da Venda:</span>
-            <span>${formatDate(order.created_at)} às ${formatTime(order.created_at)}</span>
+            <span class="info-label">${order.order_number ? 'Data da Venda:' : 'Data de Abertura:'}</span>
+            <span>${formatDate(order.created_at || order.opening_date)} às ${formatTime(order.created_at || order.opening_date)}</span>
           </div>
           <div class="info-row">
             <span class="info-label">Cliente:</span>
@@ -1256,14 +1339,26 @@ const printOrderDetails = () => {
             <span>${order.customer.email}</span>
           </div>
           ` : ''}
+          ${order.vehicle ? `
           <div class="info-row">
-            <span class="info-label">Vendedor:</span>
-            <span>${order.user?.name || 'Sistema'}</span>
+            <span class="info-label">Veículo:</span>
+            <span>${order.vehicle.plate} - ${order.vehicle.make} ${order.vehicle.model}</span>
+          </div>
+          ` : ''}
+          <div class="info-row">
+            <span class="info-label">${order.order_number ? 'Vendedor:' : 'Responsável Técnico:'}</span>
+            <span>${order.user?.name || order.technical_responsible?.name || 'Sistema'}</span>
           </div>
           <div class="info-row">
             <span class="info-label">Status:</span>
-            <span>${order.status === 'completed' ? 'Finalizado' : 'Pendente'}</span>
+            <span>${order.status === 'completed' || order.status === 'concluida' ? 'Finalizado' : 'Pendente'}</span>
           </div>
+          ${order.expected_delivery_date ? `
+          <div class="info-row">
+            <span class="info-label">Previsão de Entrega:</span>
+            <span>${formatDate(order.expected_delivery_date)}</span>
+          </div>
+          ` : ''}
         </div>
 
         <!-- Itens da Venda -->
@@ -1271,7 +1366,7 @@ const printOrderDetails = () => {
           <div class="section-title">Itens da Venda (${order.items?.length || 0} itens)</div>
           ${order.items?.map((item: any) => `
             <div class="item">
-              <div class="item-name">${item.product?.name || `Produto ID: ${item.product_id}`}</div>
+              <div class="item-name">${item.product?.name || item.service?.name || item.description || `Item ID: ${item.product_id || item.service_id}`}</div>
               <div class="item-details">
                 ${item.product?.sku ? `SKU: ${item.product.sku}` : ''}
                 ${item.product?.returnable ? ' • Retornável' : ''}
@@ -1392,9 +1487,9 @@ const registerPayment = async () => {
   try {
     let result
     
-    if (selectedReceivable.value.serviceOrder) {
+    if (selectedReceivable.value.service_order) {
       // Registrar pagamento para OS
-      const response = await api.post(`/service-orders/${selectedReceivable.value.serviceOrder.id}/payments`, {
+      const response = await api.post(`/service-orders/${selectedReceivable.value.service_order.id}/payments`, {
         amount: paymentAmount,
         payment_method: paymentForm.value.method,
         notes: paymentForm.value.notes
@@ -1488,8 +1583,8 @@ const sendReminder = (receivable: any) => {
 
 Olá ${customer.name}! 👋
 
-📋 *${receivable.serviceOrder ? 'OS' : 'Pedido'}:* #${getOrderNumber(receivable)}
-📅 *Data da ${receivable.serviceOrder ? 'OS' : 'compra'}:* ${formatDate(receivable.created_at)}
+📋 *${receivable.service_order ? 'OS' : 'Pedido'}:* #${getOrderNumber(receivable)}
+    📅 *Data da ${receivable.service_order ? 'OS' : 'compra'}:* ${formatDate(receivable.created_at)}
 💰 *Valor a receber:* R$ ${formatPrice(creditAmount)}
 
 ${isOverdue(receivable) ? '🚨 *Esta conta está em atraso.* Por favor, entre em contato conosco para regularizar.' : '⏰ *Lembrete amigável* sobre sua conta pendente.'}

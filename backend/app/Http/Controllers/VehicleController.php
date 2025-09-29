@@ -105,21 +105,39 @@ class VehicleController extends Controller
 
             // Mapear campos do frontend para o formato do banco
             $vehicleData = [
-                'customer_id' => $validated['customer_id'], // Opcional - apenas para faturamento
-                'customer_name_at_time' => $validated['customer_name_at_time'],
-                'customer_phone_at_time' => $validated['customer_phone_at_time'],
-                'customer_email_at_time' => $validated['customer_email_at_time'],
                 'plate' => $validated['plate'],
                 'model' => $validated['model'],
                 'make' => $validated['make'] ?? $validated['brand'] ?? null, // Prioriza 'make', depois 'brand'
                 'year' => $validated['year'],
-                'chassis_number' => $validated['chassis_number'],
-                'engine_number' => $validated['engine_number'],
                 'type' => $this->mapVehicleType($validated['type']), // Mapear tipo
-                'color' => $validated['color'],
-                'notes' => $validated['notes'] ?? $validated['observations'] ?? null, // Prioriza 'notes', depois 'observations'
                 'active' => $validated['active'] ?? true
             ];
+
+            // Adicionar campos opcionais apenas se não forem nulos
+            if (!empty($validated['customer_id'])) {
+                $vehicleData['customer_id'] = $validated['customer_id'];
+            }
+            if (!empty($validated['customer_name_at_time'])) {
+                $vehicleData['customer_name_at_time'] = $validated['customer_name_at_time'];
+            }
+            if (!empty($validated['customer_phone_at_time'])) {
+                $vehicleData['customer_phone_at_time'] = $validated['customer_phone_at_time'];
+            }
+            if (!empty($validated['customer_email_at_time'])) {
+                $vehicleData['customer_email_at_time'] = $validated['customer_email_at_time'];
+            }
+            if (!empty($validated['chassis_number'])) {
+                $vehicleData['chassis_number'] = $validated['chassis_number'];
+            }
+            if (!empty($validated['engine_number'])) {
+                $vehicleData['engine_number'] = $validated['engine_number'];
+            }
+            if (!empty($validated['color'])) {
+                $vehicleData['color'] = $validated['color'];
+            }
+            if (!empty($validated['notes']) || !empty($validated['observations'])) {
+                $vehicleData['notes'] = $validated['notes'] ?? $validated['observations'];
+            }
 
             $vehicle = Vehicle::create($vehicleData);
             $vehicle->load('customer');

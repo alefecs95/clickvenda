@@ -20,6 +20,131 @@ use Illuminate\Support\Facades\Validator;
 class ServiceOrderController extends Controller
 {
     /**
+     * Gerar dados para impressão da ordem de serviço
+     */
+    public function printOrder(ServiceOrder $serviceOrder): JsonResponse
+    {
+        try {
+            // Carregar todos os relacionamentos necessários
+            $serviceOrder->load([
+                'customer',
+                'vehicle',
+                'technicalResponsible',
+                'createdBy',
+                'items.product',
+                'items.service',
+                'payments'
+            ]);
+
+            // Calcular totais
+            $totalPaid = $serviceOrder->payments()->sum('amount');
+            $remainingAmount = $serviceOrder->final_amount - $totalPaid;
+
+            // Preparar dados para impressão
+            $printData = [
+                'order_info' => [
+                    'number' => $serviceOrder->os_number,
+                    'opening_date' => $serviceOrder->opening_date?->format('d/m/Y'),
+                    'expected_delivery_date' => $serviceOrder->expected_delivery_date?->format('d/m/Y'),
+                    'completion_date' => $serviceOrder->completion_date?->format('d/m/Y'),
+                    'status' => $serviceOrder->getStatusLabel(),
+                ],
+                'customer' => [
+                    'name' => $serviceOrder->customer?->name ?? $serviceOrder->vehicle?->customer_name_at_time ?? 'Cliente não informado',
+                    'phone' => $serviceOrder->customer?->phone ?? $serviceOrder->vehicle?->customer_phone_at_time ?? '',
+                    'email' => $serviceOrder->customer?->email ?? $serviceOrder->vehicle?->customer_email_at_time ?? '',
+                    'document' => $serviceOrder->customer?->document ?? '',
+                    'address' => $serviceOrder->customer?->address ?? '',
+                    'city' => $serviceOrder->customer?->city ?? '',
+                    'state' => $serviceOrder->customer?->state ?? '',
+                    'zip_code' => $serviceOrder->customer?->zip_code ?? '',
+                ],
+                'vehicle' => [
+                    'plate' => $serviceOrder->vehicle?->plate ?? '',
+                    'model' => $serviceOrder->vehicle?->model ?? '',
+                    'brand' => $serviceOrder->vehicle?->brand ?? $serviceOrder->vehicle?->make ?? '',
+                    'year' => $serviceOrder->vehicle?->year ?? '',
+                    'color' => $serviceOrder->vehicle?->color ?? '',
+                    'mileage' => $serviceOrder->vehicle_mileage ?? $serviceOrder->vehicle?->mileage ?? '',
+                    'chassis' => $serviceOrder->vehicle?->chassis_number ?? '',
+                ],
+                'technical_responsible' => [
+                    'name' => $serviceOrder->technicalResponsible?->name ?? 'Não informado',
+                ],
+                'created_by' => [
+                    'name' => $serviceOrder->createdBy?->name ?? 'Sistema',
+                ],
+                'description' => [
+                    'problem' => $serviceOrder->problem_description ?? '',
+                    'diagnosis' => $serviceOrder->diagnosis ?? '',
+                    'internal_observations' => $serviceOrder->internal_observations ?? '',
+                    'customer_observations' => $serviceOrder->customer_observations ?? '',
+                    'notes' => $serviceOrder->notes ?? '',
+                ],
+                'items' => [
+                    'products' => $serviceOrder->items->where('item_type', 'product')->map(function ($item) {
+                        return [
+                            'code' => $item->product?->code ?? '',
+                            'description' => $item->description ?? $item->product?->name ?? '',
+                            'quantity' => $item->quantity,
+                            'unit_price' => $item->unit_price,
+                            'total_price' => $item->total_price,
+                        ];
+                    })->values(),
+                    'services' => $serviceOrder->items->where('item_type', 'service')->map(function ($item) {
+                        return [
+                            'code' => $item->service?->code ?? '',
+                            'description' => $item->description ?? $item->service?->name ?? '',
+                            'quantity' => $item->quantity,
+                            'unit_price' => $item->unit_price,
+                            'total_price' => $item->total_price,
+                        ];
+                    })->values(),
+                ],
+                'totals' => [
+                    'total_amount' => $serviceOrder->total_amount,
+                    'discount_amount' => $serviceOrder->discount_amount ?? 0,
+                    'final_amount' => $serviceOrder->final_amount,
+                    'total_paid' => $totalPaid,
+                    'remaining_amount' => $remainingAmount,
+                ],
+                'payments' => $serviceOrder->payments->map(function ($payment) {
+                    return [
+                        'date' => $payment->paid_at?->format('d/m/Y'),
+                        'method' => $payment->getPaymentMethodLabelAttribute(),
+                        'amount' => $payment->amount,
+                        'reference' => $payment->payment_reference ?? '',
+                    ];
+                })->values(),
+                'warranty' => [
+                    'products_days' => $serviceOrder->warranty_products_days ?? 90, // Usar valor do banco ou padrão
+                    'services_days' => $serviceOrder->warranty_services_days ?? 30, // Usar valor do banco ou padrão
+                    'products_km' => $serviceOrder->warranty_products_km ?? null, // Quilometragem para produtos
+                    'services_km' => $serviceOrder->warranty_services_km ?? null, // Quilometragem para serviços
+                ],
+                'company' => [
+                    'name' => \App\Models\Setting::get('store.name', 'ClickVenda'),
+                    'address' => \App\Models\Setting::get('store.address', 'Endereço da empresa'),
+                    'phone' => 'Telefones: ' . \App\Models\Setting::get('store.phone', 'telefone da empresa'),
+                    'email' => 'E-mail: ' . \App\Models\Setting::get('store.email', 'email@empresa.com'),
+                ],
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $printData
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Erro ao gerar dados para impressão da OS: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao gerar dados para impressão'
+            ], 500);
+        }
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index(Request $request): JsonResponse
@@ -110,7 +235,19 @@ class ServiceOrderController extends Controller
     public function store(Request $request): JsonResponse
     {
         try {
-            \Log::info('Dados recebidos para criar OS:', $request->all());
+            // Log inicial para confirmar que a requisição chegou
+            \Log::info('=== REQUISIÇÃO POST RECEBIDA NO STORE ===');
+            \Log::info('Method: ' . $request->method());
+            \Log::info('URL: ' . $request->fullUrl());
+            
+            // Log dos dados recebidos
+            \Log::info('=== DADOS RECEBIDOS NO BACKEND ===', $request->all());
+            \Log::info('Campos de garantia recebidos:', [
+                'warranty_products_km' => $request->input('warranty_products_km'),
+                'warranty_services_km' => $request->input('warranty_services_km'),
+                'warranty_products_days' => $request->input('warranty_products_days'),
+                'warranty_services_days' => $request->input('warranty_services_days')
+            ]);
             $validated = $request->validate([
                 'customer_id' => 'nullable|exists:customers,id',
                 'vehicle_id' => 'required|exists:vehicles,id',
@@ -123,7 +260,13 @@ class ServiceOrderController extends Controller
                 'customer_observations' => 'nullable|string|max:1000',
                 'payment_method' => 'nullable|in:money,card,pix,credit,multiple',
                 'payment_methods' => 'nullable|array',
+                'billing_type' => 'nullable|in:avista,aprazo,orcamento',
                 'notes' => 'nullable|string|max:1000',
+                'warranty_products_days' => 'nullable|integer|min:0',
+                'warranty_services_days' => 'nullable|integer|min:0',
+                'warranty_products_km' => 'nullable|integer|min:0',
+                'warranty_services_km' => 'nullable|integer|min:0',
+                'vehicle_mileage' => 'nullable|integer|min:0',
                 'items' => 'required|array|min:1',
                 'items.*.item_type' => 'required|in:product,service',
                 'items.*.product_id' => 'required_if:items.*.item_type,product|nullable|exists:products,id',
@@ -150,8 +293,8 @@ class ServiceOrderController extends Controller
                 $osNumber = $this->generateOSNumber();
 
                 // Criar OS
-            // Verificar crédito do cliente se for OS a prazo
-            if ($validated['payment_method'] === 'credit' && $validated['customer_id']) {
+            // Verificar crédito do cliente se for OS a prazo (não aplicável para orçamentos)
+            if (isset($validated['payment_method']) && $validated['payment_method'] === 'credit' && $validated['customer_id'] && ($validated['billing_type'] ?? 'avista') !== 'orcamento') {
                 $customer = Customer::find($validated['customer_id']);
                 if (!$customer) {
                     return response()->json([
@@ -178,7 +321,7 @@ class ServiceOrderController extends Controller
             }
 
             $serviceOrder = ServiceOrder::create([
-                'order_number' => $osNumber, // Padronizado com orders
+                'order_number' => $osNumber, // Número da OS
                 'customer_id' => $validated['customer_id'] ?? null,
                 'vehicle_id' => $validated['vehicle_id'],
                 'technical_responsible_id' => $validated['technical_responsible_id'],
@@ -189,9 +332,15 @@ class ServiceOrderController extends Controller
                 'diagnosis' => $validated['diagnosis'] ?? null,
                 'internal_observations' => $validated['internal_observations'] ?? null,
                 'customer_observations' => $validated['customer_observations'] ?? null,
-                'payment_method' => $validated['payment_method'] ?? 'money', // Padronizado com orders
+                'payment_method' => $validated['payment_method'] ?? null, // Removido valor padrão
                 'payment_methods' => $validated['payment_methods'] ?? null, // Padronizado com orders
+                'billing_type' => $validated['billing_type'] ?? 'avista', // Padrão à vista
                 'notes' => $validated['notes'] ?? null, // Padronizado com orders
+                'warranty_products_days' => $validated['warranty_products_days'] ?? null,
+                'warranty_services_days' => $validated['warranty_services_days'] ?? null,
+                'warranty_products_km' => $validated['warranty_products_km'] ?? null,
+                'warranty_services_km' => $validated['warranty_services_km'] ?? null,
+                'vehicle_mileage' => $validated['vehicle_mileage'] ?? null,
                 'discount_amount' => $validated['discount_amount'] ?? 0,
                 'status' => 'aberta' // Simplificado - sem billing_type
             ]);
@@ -228,8 +377,8 @@ class ServiceOrderController extends Controller
                 // Calcular totais
                 $serviceOrder->calculateTotals();
 
-                // Criar ReceivablePayment se for OS a prazo
-                if ($validated['payment_method'] === 'credit' && $validated['customer_id']) {
+                // Criar ReceivablePayment se for OS a prazo (não aplicável para orçamentos)
+                if (isset($validated['payment_method']) && $validated['payment_method'] === 'credit' && $validated['customer_id'] && ($validated['billing_type'] ?? 'avista') !== 'orcamento') {
                     $customer = Customer::find($validated['customer_id']);
                     
                     // Usar crédito do cliente
@@ -249,7 +398,7 @@ class ServiceOrderController extends Controller
                         'remaining_amount' => $serviceOrder->final_amount,
                         'due_date' => $validated['expected_delivery_date'] ?? now()->addDays($defaultPaymentTerm),
                         'status' => 'pending',
-                        'notes' => "OS #{$serviceOrder->order_number} - {$serviceOrder->problem_description}"
+                        'notes' => "OS #{$serviceOrder->os_number} - {$serviceOrder->problem_description}"
                     ]);
                 }
 
@@ -347,6 +496,13 @@ class ServiceOrderController extends Controller
     public function update(Request $request, ServiceOrder $serviceOrder): JsonResponse
     {
         try {
+            \Log::info('Dados recebidos para atualizar OS:', $request->all());
+            \Log::info('Campos de garantia recebidos:', [
+                'warranty_products_km' => $request->warranty_products_km,
+                'warranty_services_km' => $request->warranty_services_km,
+                'warranty_products_days' => $request->warranty_products_days,
+                'warranty_services_days' => $request->warranty_services_days
+            ]);
             $validated = $request->validate([
                 'vehicle_id' => 'nullable|exists:vehicles,id',
                 'technical_responsible_id' => 'nullable|exists:users,id',
@@ -356,7 +512,11 @@ class ServiceOrderController extends Controller
                 'internal_observations' => 'nullable|string|max:1000',
                 'customer_observations' => 'nullable|string|max:1000',
                 'discount_amount' => 'nullable|numeric|min:0',
-                'attachments' => 'nullable|array'
+                'attachments' => 'nullable|array',
+                'warranty_products_days' => 'nullable|integer|min:0',
+                'warranty_services_days' => 'nullable|integer|min:0',
+                'warranty_products_km' => 'nullable|integer|min:0',
+                'warranty_services_km' => 'nullable|integer|min:0'
             ]);
 
             $serviceOrder->update($validated);
@@ -504,106 +664,48 @@ class ServiceOrderController extends Controller
     }
 
     /**
-     * Converter OS em pedido
+     * Aprovar orçamento pelo cliente
      */
-    public function convertToOrder(Request $request, ServiceOrder $serviceOrder): JsonResponse
+    public function approveCustomer(Request $request, ServiceOrder $serviceOrder): JsonResponse
     {
         try {
-            if ($serviceOrder->billing_type !== 'orcamento' || !$serviceOrder->isApproved()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Esta ordem de serviço não pode ser convertida em pedido'
-                ], 400);
-            }
-
             $validated = $request->validate([
-                'payment_method' => 'required|in:money,card,pix,credit,multiple',
-                'payment_methods' => 'nullable|array',
-                'payment_methods.*.method' => 'required_with:payment_methods|in:money,card,pix,credit',
-                'payment_methods.*.amount' => 'required_with:payment_methods|numeric|min:0'
+                'approval_notes' => 'nullable|string|max:500'
             ]);
 
-            return DB::transaction(function () use ($serviceOrder, $validated) {
-                // Criar pedido
-                $order = Order::create([
-                    'customer_id' => $serviceOrder->customer_id,
-                    'user_id' => Auth::id(),
-                    'order_number' => $this->generateOrderNumber(),
-                    'total_amount' => $serviceOrder->total_amount,
-                    'discount_amount' => $serviceOrder->discount_amount,
-                    'final_amount' => $serviceOrder->final_amount,
-                    'payment_method' => $validated['payment_method'],
-                    'payment_methods' => $validated['payment_methods'] ?? null,
-                    'status' => 'completed',
-                    'notes' => "Convertido da OS #{$serviceOrder->os_number}"
-                ]);
-
-                // Criar itens do pedido
-                foreach ($serviceOrder->items as $item) {
-                    if ($item->isProduct()) {
-                        $order->items()->create([
-                            'product_id' => $item->product_id,
-                            'quantity' => $item->quantity,
-                            'unit_price' => $item->unit_price
-                        ]);
-                    }
-                }
-
-                // Atualizar OS
-                $serviceOrder->update([
-                    'order_id' => $order->id,
-                    'status' => 'concluida',
-                    'completion_date' => now()
-                ]);
-
-                // Criar conta a receber se necessário
-                if (in_array($validated['payment_method'], ['credit', 'multiple'])) {
-                    $creditAmount = $this->calculateCreditAmount($validated);
-                    if ($creditAmount > 0) {
-                        // Obter prazo padrão das configurações
-                        $defaultPaymentTerm = \DB::table('settings')
-                            ->where('key', 'sales.default_payment_term')
-                            ->value('value') ?? 30;
-                        
-                        ReceivablePayment::create([
-                            'order_id' => $order->id,
-                            'service_order_id' => $serviceOrder->id,
-                            'customer_id' => $serviceOrder->customer_id,
-                            'total_receivable_amount' => $creditAmount,
-                            'paid_amount' => 0,
-                            'remaining_amount' => $creditAmount,
-                            'due_date' => now()->addDays($defaultPaymentTerm),
-                            'status' => 'pending'
-                        ]);
-                    }
-                }
-
+            if ($serviceOrder->approveByCustomer($validated['approval_notes'] ?? null)) {
                 $serviceOrder->load([
                     'customer',
                     'vehicle',
                     'technicalResponsible',
                     'createdBy',
                     'items.product',
-                    'items.service',
-                    'order'
+                    'items.service'
                 ]);
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Ordem de serviço convertida em pedido com sucesso',
+                    'message' => 'Orçamento aprovado pelo cliente com sucesso',
                     'data' => $serviceOrder
                 ]);
-            });
+            }
 
-        } catch (\Exception $e) {
-            \Log::error('Erro ao converter OS em pedido: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Erro ao converter ordem de serviço em pedido',
+                'message' => 'Este orçamento não pode ser aprovado pelo cliente'
+            ], 400);
+
+        } catch (\Exception $e) {
+            \Log::error('Erro ao aprovar orçamento pelo cliente: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao aprovar orçamento pelo cliente',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
+
+
 
     /**
      * Estatísticas das OS

@@ -1,33 +1,19 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <header class="bg-white shadow-sm border-b border-gray-200">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center py-4">
-          <div class="flex items-center">
-            <button
-              @click="router.back()"
-              class="mr-4 p-2 text-gray-600 hover:text-gray-900"
-            >
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-              </svg>
-            </button>
-            <h1 class="text-xl font-semibold text-gray-900">Pedidos</h1>
-          </div>
-          
-          <button
-            @click="router.push('/sales')"
-            class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
-          >
-            Nova Venda
-          </button>
-        </div>
+  <AppLayout>
+    <!-- Header com botão de ação -->
+    <div class="flex justify-between items-center mb-6">
+      <div>
+        <h2 class="text-2xl font-bold text-gray-900">Pedidos</h2>
+        <p class="text-gray-600">Gerencie todos os pedidos de vendas</p>
       </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      
+      <button
+        @click="router.push('/sales')"
+        class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+      >
+        Nova Venda
+      </button>
+    </div>
       <!-- Filters -->
       <div class="bg-white rounded-lg shadow p-6 mb-6">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -215,14 +201,15 @@
           </div>
         </div>
       </div>
-    </main>
-  </div>
+    
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue'
+import { onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useOrdersStore } from '@/stores/orders'
+import AppLayout from '@/components/AppLayout.vue'
 
 const router = useRouter()
 const ordersStore = useOrdersStore()
@@ -237,7 +224,7 @@ const filters = reactive({
   per_page: 15
 })
 
-let searchTimeout: NodeJS.Timeout | null = null
+let searchTimeout: number | null = null
 
 const loadOrders = async () => {
   try {

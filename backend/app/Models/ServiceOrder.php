@@ -13,7 +13,7 @@ class ServiceOrder extends Model
     use HasFactory;
 
     protected $fillable = [
-        'order_number', // Número sequencial da OS (padronizado com orders)
+        'order_number', // Número sequencial da OS
         'vehicle_id', // VINCULAÇÃO PRINCIPAL (obrigatório)
         'customer_id', // Apenas para faturamento (opcional)
         'technical_responsible_id',
@@ -22,6 +22,7 @@ class ServiceOrder extends Model
         'expected_delivery_date', // Data de previsão de entrega
         'completion_date',
         'status',
+        'approved', // Aprovação da OS
         'problem_description',
         'diagnosis',
         'internal_observations', // Observações internas
@@ -29,15 +30,27 @@ class ServiceOrder extends Model
         'total_amount', // Valor total (padronizado com orders)
         'discount_amount', // Desconto (padronizado com orders)
         'final_amount', // Valor final (padronizado com orders)
+        'billing_type', // Tipo de cobrança: avista, aprazo, orcamento
+        'customer_approved', // Aprovação do cliente para orçamentos
+        'approved_at', // Data de aprovação
+        'approval_notes', // Observações da aprovação
         'payment_method', // Forma de pagamento (padronizado com orders)
         'payment_methods', // Múltiplas formas de pagamento (padronizado com orders)
-        'notes' // Observações gerais (padronizado com orders)
+        'notes', // Observações gerais (padronizado com orders)
+        'warranty_products_days', // Dias de garantia para produtos
+        'warranty_services_days', // Dias de garantia para serviços
+        'warranty_products_km', // KM de garantia para produtos
+        'warranty_services_km', // KM de garantia para serviços
+        'vehicle_mileage' // KM do veículo no momento da OS
     ];
 
     protected $casts = [
         'opening_date' => 'date',
         'expected_delivery_date' => 'date',
         'completion_date' => 'date',
+        'approved_at' => 'datetime',
+        'approved' => 'boolean',
+        'customer_approved' => 'boolean',
         'total_amount' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'final_amount' => 'decimal:2',
@@ -172,6 +185,28 @@ class ServiceOrder extends Model
             'approved_at' => now(),
             'approval_notes' => $notes,
             'status' => 'em_andamento'
+        ]);
+
+        return true;
+    }
+
+    public function approveByCustomer(string $notes = null): bool
+    {
+        // Verificar se é um orçamento
+        if ($this->billing_type !== 'orcamento') {
+            return false;
+        }
+
+        // Verificar se já foi aprovado pelo cliente
+        if ($this->customer_approved) {
+            return false;
+        }
+
+        $this->update([
+            'customer_approved' => true,
+            'approved_at' => now(),
+            'approval_notes' => $notes,
+            'status' => 'aguardando_aprovacao'
         ]);
 
         return true;

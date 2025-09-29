@@ -532,7 +532,10 @@ const recentActivities = computed(() => {
   
   // Adicionar OS recentes
   if (recentServiceOrders.value && Array.isArray(recentServiceOrders.value)) {
+    console.log('Service Orders no Dashboard:', recentServiceOrders.value)
     recentServiceOrders.value.forEach(serviceOrder => {
+      console.log('Service Order individual:', serviceOrder)
+      console.log('OS Number:', serviceOrder.order_number)
       activities.push({
         id: `service-order-${serviceOrder.id}`,
         type: 'service-order',

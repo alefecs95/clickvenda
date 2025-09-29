@@ -110,6 +110,8 @@ export interface ServiceOrder {
   items?: ServiceOrderItem[]
   order?: any
   receivable_payment?: any
+  warranty_products_days?: number
+  warranty_services_days?: number
 }
 
 export interface ServiceOrderFilters {
@@ -237,7 +239,7 @@ export const useServiceOrdersStore = defineStore('serviceOrders', () => {
       loading.value = true
       error.value = null
 
-      const response = await api.post('/service-orders', serviceOrderData)
+      const response = await api.post('/service-orders/', serviceOrderData)
       
       if (response.data.success) {
         // Adicionar à lista local
@@ -367,6 +369,43 @@ export const useServiceOrdersStore = defineStore('serviceOrders', () => {
     }
   }
 
+  const approveCustomerServiceOrder = async (id: number, approvalNotes?: string) => {
+    try {
+      loading.value = true
+      error.value = null
+
+      const response = await api.post(`/service-orders/${id}/approve-customer`, {
+        approval_notes: approvalNotes
+      })
+      
+      if (response.data.success) {
+        // Atualizar na lista local
+        const index = serviceOrders.value.findIndex(os => os.id === id)
+        if (index !== -1) {
+          serviceOrders.value[index] = response.data.data
+        }
+        return {
+          success: true,
+          serviceOrder: response.data.data,
+          message: response.data.message || 'Orçamento aprovado pelo cliente com sucesso'
+        }
+      } else {
+        return {
+          success: false,
+          error: response.data.message || 'Erro ao aprovar orçamento pelo cliente'
+        }
+      }
+    } catch (err: any) {
+      error.value = err.response?.data?.message || err.message || 'Erro ao aprovar orçamento pelo cliente'
+      return {
+        success: false,
+        error: err.response?.data?.message || err.message || 'Erro ao aprovar orçamento pelo cliente'
+      }
+    } finally {
+      loading.value = false
+    }
+  }
+
   const completeServiceOrder = async (id: number) => {
     try {
       loading.value = true
@@ -396,41 +435,6 @@ export const useServiceOrdersStore = defineStore('serviceOrders', () => {
       return {
         success: false,
         error: err.response?.data?.message || err.message || 'Erro ao concluir ordem de serviço'
-      }
-    } finally {
-      loading.value = false
-    }
-  }
-
-  const convertToOrder = async (id: number, paymentData: any) => {
-    try {
-      loading.value = true
-      error.value = null
-
-      const response = await api.post(`/service-orders/${id}/convert-to-order`, paymentData)
-      
-      if (response.data.success) {
-        // Atualizar na lista local
-        const index = serviceOrders.value.findIndex(os => os.id === id)
-        if (index !== -1) {
-          serviceOrders.value[index] = response.data.data
-        }
-        return {
-          success: true,
-          serviceOrder: response.data.data,
-          message: response.data.message || 'Ordem de serviço convertida em pedido com sucesso'
-        }
-      } else {
-        return {
-          success: false,
-          error: response.data.message || 'Erro ao converter ordem de serviço'
-        }
-      }
-    } catch (err: any) {
-      error.value = err.response?.data?.message || err.message || 'Erro ao converter ordem de serviço'
-      return {
-        success: false,
-        error: err.response?.data?.message || err.message || 'Erro ao converter ordem de serviço'
       }
     } finally {
       loading.value = false
@@ -498,8 +502,8 @@ export const useServiceOrdersStore = defineStore('serviceOrders', () => {
     updateServiceOrder,
     deleteServiceOrder,
     approveServiceOrder,
+    approveCustomerServiceOrder,
     completeServiceOrder,
-    convertToOrder,
     fetchStatistics,
     getStatusLabel,
     getBillingTypeLabel,

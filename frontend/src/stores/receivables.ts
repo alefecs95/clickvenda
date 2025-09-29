@@ -21,6 +21,7 @@ export interface ReceivablePayment {
   notes?: string
   order?: any
   serviceOrder?: any
+  items?: any[] // Adicionar items na interface
   customer: any
   created_at: string
   updated_at: string
@@ -113,6 +114,7 @@ export const useReceivablesStore = defineStore('receivables', () => {
           })) || [],
           notes: `OS #${so.order_number} - ${so.problem_description}`,
           serviceOrder: so,
+          items: so.items || [], // Adicionar os itens da OS
           customer: so.customer,
           created_at: so.created_at,
           updated_at: so.updated_at

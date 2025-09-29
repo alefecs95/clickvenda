@@ -32,7 +32,14 @@
               @click="approveServiceOrder"
               class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
             >
-              Aprovar
+              Aprovar e Iniciar Serviço
+            </button>
+            <button
+              v-if="serviceOrder && canApproveCustomer(serviceOrder)"
+              @click="approveCustomerServiceOrder"
+              class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors"
+            >
+              Aprovar Orçamento (Cliente)
             </button>
             <button
               v-if="serviceOrder && canComplete(serviceOrder)"
@@ -40,13 +47,6 @@
               class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
             >
               Concluir
-            </button>
-            <button
-              v-if="serviceOrder && canConvert(serviceOrder)"
-              @click="convertServiceOrder"
-              class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-            >
-              Converter em Pedido
             </button>
             <button
               v-if="serviceOrder && canCancel(serviceOrder)"
@@ -60,6 +60,12 @@
               class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
             >
               Editar
+            </button>
+            <button
+              @click="printPage"
+              class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              Imprimir
             </button>
           </div>
         </div>
@@ -258,11 +264,11 @@
           <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Total Produtos</label>
-              <p class="text-2xl font-semibold text-gray-900">{{ formatCurrency(serviceOrder.total_products) }}</p>
+              <p class="text-2xl font-semibold text-gray-900">{{ formatCurrency(getProductsTotal()) }}</p>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Total Serviços</label>
-              <p class="text-2xl font-semibold text-gray-900">{{ formatCurrency(serviceOrder.total_services) }}</p>
+              <p class="text-2xl font-semibold text-gray-900">{{ formatCurrency(getServicesTotal()) }}</p>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Desconto</label>
@@ -398,17 +404,131 @@
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Forma de Pagamento</label>
-              <select
-                v-model="paymentForm.payment_method"
-                required
-                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-              >
-                <option value="">Selecione...</option>
-                <option value="money">Dinheiro</option>
-                <option value="card">Cartão</option>
-                <option value="pix">PIX</option>
-                <option value="credit">A Prazo (Crédito)</option>
-              </select>
+              
+              <!-- Checkbox para múltiplas formas de pagamento -->
+              <div class="mb-4">
+                <label class="flex items-center">
+                  <input
+                    type="checkbox"
+                    v-model="multiplePayments"
+                    class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
+                  />
+                  <span class="ml-2 text-sm text-gray-600">Usar múltiplas formas de pagamento</span>
+                </label>
+              </div>
+
+              <!-- Pagamento único -->
+              <div v-if="!multiplePayments">
+                <select
+                  v-model="paymentForm.payment_method"
+                  required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="">Selecione...</option>
+                  <option value="money">💵 Dinheiro</option>
+                  <option value="card">💳 Cartão</option>
+                  <option value="pix">📱 PIX</option>
+                  <option value="credit" v-if="canUseCredit">💰 A Prazo (Crédito)</option>
+                </select>
+              </div>
+
+              <!-- Múltiplos pagamentos -->
+              <div v-else class="space-y-4">
+                <div v-for="(payment, index) in paymentMethods" :key="index" class="border border-gray-200 rounded-lg p-4">
+                  <div class="flex justify-between items-center mb-3">
+                    <h4 class="font-medium text-gray-900">Pagamento {{ index + 1 }}</h4>
+                    <button
+                      v-if="paymentMethods.length > 1"
+                      @click="removePaymentMethod(index)"
+                      type="button"
+                      class="text-red-600 hover:text-red-800"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Forma</label>
+                      <select
+                        v-model="payment.method"
+                        required
+                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                      >
+                        <option value="">Selecione...</option>
+                        <option value="money">💵 Dinheiro</option>
+                        <option value="card">💳 Cartão</option>
+                        <option value="pix">📱 PIX</option>
+                        <option v-if="canUseCredit" value="credit">💰 A Prazo</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Valor (R$)</label>
+                      <input
+                        v-model="payment.amount"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        :max="getMaxPaymentAmount()"
+                        required
+                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="space-y-2">
+                  <div class="flex justify-between items-center">
+                    <button
+                      @click="addPaymentMethod"
+                      type="button"
+                      class="text-primary-600 hover:text-primary-700 text-sm font-medium"
+                    >
+                      + Adicionar forma de pagamento
+                    </button>
+                  </div>
+                  
+                  <!-- Resumo de Pagamento -->
+                  <div class="bg-gray-100 rounded-lg p-3">
+                    <div class="flex justify-between text-sm mb-2">
+                      <span class="text-gray-600">Valor máximo:</span>
+                      <span class="font-bold">{{ formatCurrency(getMaxPaymentAmount()) }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm mb-2">
+                      <span class="text-gray-600">Total a pagar:</span>
+                      <span class="font-bold" :class="totalMultiplePayments >= getMaxPaymentAmount() ? 'text-green-600' : 'text-blue-600'">
+                        {{ formatCurrency(totalMultiplePayments) }}
+                      </span>
+                    </div>
+                    <div v-if="totalMultiplePayments < getMaxPaymentAmount()" class="flex justify-between text-sm">
+                      <span class="text-red-600 font-medium">Falta pagar:</span>
+                      <span class="font-bold text-red-600">{{ formatCurrency(getMaxPaymentAmount() - totalMultiplePayments) }}</span>
+                    </div>
+                    <div v-else-if="totalMultiplePayments > getMaxPaymentAmount()" class="flex justify-between text-sm">
+                      <span class="text-orange-600 font-medium">Excesso:</span>
+                      <span class="font-bold text-orange-600">{{ formatCurrency(totalMultiplePayments - getMaxPaymentAmount()) }}</span>
+                    </div>
+                    <div v-else class="text-center text-sm">
+                      <span class="text-green-600 font-bold">✓ Valor correto</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Informações de crédito quando A Prazo for selecionado -->
+            <div v-if="paymentForm.payment_method === 'credit' && serviceOrder?.customer" class="bg-blue-50 p-3 rounded-md">
+              <h4 class="text-sm font-medium text-blue-800 mb-2">Informações de Crédito</h4>
+              <div class="text-sm text-blue-700 space-y-1">
+                <div>Limite: {{ formatCurrency(serviceOrder.customer.credit_limit) }}</div>
+                <div>Usado: {{ formatCurrency(serviceOrder.customer.credit_used) }}</div>
+                <div>Disponível: {{ formatCurrency(getAvailableCredit()) }}</div>
+              </div>
+              <div v-if="!hasEnoughCredit" class="mt-2 text-sm text-red-600 font-medium">
+                ⚠️ Crédito insuficiente para este pagamento!
+              </div>
             </div>
 
             <div>
@@ -476,6 +596,10 @@ const editingTechnicalResponsibleData = ref('')
 const showPaymentModal = ref(false)
 const paymentSubmitting = ref(false)
 
+// Sistema de múltiplas formas de pagamento
+const multiplePayments = ref(false)
+const paymentMethods = ref([{ method: '', amount: 0 }])
+
 const paymentForm = ref({
   amount: 0,
   payment_method: 'dinheiro',
@@ -486,131 +610,117 @@ const paymentForm = ref({
 // Computed
 const users = computed(() => usersStore.users)
 
-// Methods
-const loadServiceOrder = async () => {
-  loading.value = true
-  const result = await serviceOrdersStore.fetchServiceOrder(Number(route.params.id))
-  if (result.success) {
-    serviceOrder.value = result.serviceOrder
-    
-    // Carregar pagamentos da OS
-    try {
-      await serviceOrderPaymentsStore.fetchPayments(Number(route.params.id))
-    } catch (error) {
-      console.error('Erro ao carregar pagamentos:', error)
+// Computed properties para validação de crédito
+const canUseCredit = computed(() => {
+  const customer = (serviceOrder.value as any)?.customer
+  return customer && safeNumber(customer.credit_limit) > 0
+})
+
+const hasEnoughCredit = computed(() => {
+  if (!canUseCredit.value) return false
+  const available = getAvailableCredit()
+  const amount = safeNumber(paymentForm.value.amount)
+  return available >= amount
+})
+
+const getAvailableCredit = (): number => {
+  const customer = (serviceOrder.value as any)?.customer
+  if (!customer) return 0
+  const limit = safeNumber(customer.credit_limit)
+  const used = safeNumber(customer.credit_used)
+  return Math.max(0, limit - used)
+}
+
+// Computed properties para múltiplas formas de pagamento
+const totalMultiplePayments = computed(() => {
+  return paymentMethods.value.reduce((sum, payment) => {
+    return sum + (parseFloat(payment.amount) || 0)
+  }, 0)
+})
+
+// Funções para múltiplas formas de pagamento
+const addPaymentMethod = () => {
+  paymentMethods.value.push({ method: '', amount: 0 })
+}
+
+const removePaymentMethod = (index) => {
+  if (paymentMethods.value.length > 1) {
+    paymentMethods.value.splice(index, 1)
+  }
+}
+
+// Helpers numéricos e totais seguros
+const safeNumber = (value: any): number => {
+  if (value === null || value === undefined) return 0
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+  if (typeof value === 'string') {
+    const s = value.trim()
+    if (s === '') return 0
+    let normalized = s
+    // Formato brasileiro com milhares e vírgula decimal (ex: 1.234,56)
+    if (/^-?\d{1,3}(\.\d{3})*,\d+$/.test(s)) {
+      normalized = s.replace(/\./g, '').replace(',', '.')
+    } else if (s.includes(',') && !s.includes('.')) {
+      // Apenas vírgula como decimal
+      normalized = s.replace(',', '.')
+    } else {
+      // Remove caracteres não numéricos mantendo ponto e sinal
+      normalized = s.replace(/[^\d.\-]/g, '')
     }
-  } else {
-    alert(result.error)
-    router.push('/service-orders')
+    const num = parseFloat(normalized)
+    return Number.isFinite(num) ? num : 0
   }
-  loading.value = false
+  const num = Number(value)
+  return Number.isFinite(num) ? num : 0
 }
 
-const startEditingTechnicalResponsible = () => {
-  editingTechnicalResponsible.value = true
-  editingTechnicalResponsibleData.value = serviceOrder.value.technical_responsible_id
+const getProductsTotal = (): number => {
+  const order: any = serviceOrder.value as any
+  const items = order?.items
+  if (Array.isArray(items) && items.length > 0) {
+    return items
+      .filter((i: any) => i?.item_type === 'product')
+      .reduce((sum: number, i: any) => {
+        const total = safeNumber(i?.total_price)
+        if (total > 0) return sum + total
+        return sum + safeNumber(i?.unit_price) * safeNumber(i?.quantity)
+      }, 0)
+  }
+  return safeNumber(order?.total_products)
 }
 
-const cancelEditingTechnicalResponsible = () => {
-  editingTechnicalResponsible.value = false
-  editingTechnicalResponsibleData.value = ''
-}
-
-const saveTechnicalResponsible = async () => {
-  if (!editingTechnicalResponsibleData.value) {
-    alert('Selecione um técnico responsável')
-    return
+const getServicesTotal = (): number => {
+  const order: any = serviceOrder.value as any
+  const items = order?.items
+  if (Array.isArray(items) && items.length > 0) {
+    return items
+      .filter((i: any) => i?.item_type === 'service')
+      .reduce((sum: number, i: any) => {
+        const total = safeNumber(i?.total_price)
+        if (total > 0) return sum + total
+        return sum + safeNumber(i?.unit_price) * safeNumber(i?.quantity)
+      }, 0)
   }
-
-  const result = await serviceOrdersStore.updateServiceOrder(serviceOrder.value.id, {
-    technical_responsible_id: editingTechnicalResponsibleData.value
-  })
-
-  if (result.success) {
-    editingTechnicalResponsible.value = false
-    editingTechnicalResponsibleData.value = ''
-    await loadServiceOrder()
-    alert('Técnico responsável atualizado com sucesso!')
-  } else {
-    alert(result.error || 'Erro ao atualizar técnico responsável')
-  }
-}
-
-const openPaymentModal = () => {
-  if (!serviceOrder.value) {
-    alert('Erro: OS não carregada')
-    return
-  }
-
-  paymentForm.value = {
-    amount: serviceOrder.value.remaining_amount || 0,
-    payment_method: 'dinheiro',
-    payment_reference: '',
-    notes: ''
-  }
-  showPaymentModal.value = true
-}
-
-const closePaymentModal = () => {
-  showPaymentModal.value = false
-  paymentForm.value = {
-    amount: 0,
-    payment_method: 'dinheiro',
-    payment_reference: '',
-    notes: ''
-  }
-}
-
-const getMaxPaymentAmount = () => {
-  return serviceOrder.value?.remaining_amount || 0
-}
-
-const registerPayment = async () => {
-  if (!serviceOrder.value) return
-
-  const paymentAmount = Number(paymentForm.value.amount)
-  const remainingAmount = serviceOrder.value.remaining_amount || 0
-
-  // Validações no frontend
-  if (paymentAmount <= 0) {
-    alert('O valor do pagamento deve ser maior que zero.')
-    return
-  }
-
-  if (paymentAmount > remainingAmount) {
-    alert(`O valor do pagamento não pode ser maior que o valor restante (R$ ${formatCurrency(remainingAmount)}).`)
-    return
-  }
-
-  paymentSubmitting.value = true
-  try {
-    const result = await serviceOrderPaymentsStore.createPayment(
-      serviceOrder.value.id,
-      {
-        amount: paymentAmount,
-        payment_method: paymentForm.value.payment_method,
-        payment_reference: paymentForm.value.payment_reference,
-        notes: paymentForm.value.notes
-      }
-    )
-
-    if (result) {
-      closePaymentModal()
-      await loadServiceOrder()
-      alert('Pagamento registrado com sucesso!')
-    }
-  } catch (error: any) {
-    console.error('Erro ao registrar pagamento:', error)
-    alert(error.message || 'Erro ao registrar pagamento')
-  } finally {
-    paymentSubmitting.value = false
-  }
+  return safeNumber(order?.total_services)
 }
 
 const approveServiceOrder = async () => {
-  if (confirm('Deseja aprovar esta ordem de serviço?')) {
+  if (confirm('Deseja aprovar e iniciar esta ordem de serviço?')) {
     const result = await serviceOrdersStore.approveServiceOrder(Number(route.params.id))
     if (result.success) {
+      loadServiceOrder()
+    } else {
+      alert(result.error)
+    }
+  }
+}
+
+const approveCustomerServiceOrder = async () => {
+  const notes = prompt('Observações sobre a aprovação do orçamento (opcional):')
+  if (notes !== null) { // null significa que o usuário cancelou
+    const result = await serviceOrdersStore.approveCustomerServiceOrder(Number(route.params.id), notes || undefined)
+    if (result.success) {
+      alert('Orçamento aprovado pelo cliente com sucesso!')
       loadServiceOrder()
     } else {
       alert(result.error)
@@ -627,10 +737,6 @@ const completeServiceOrder = async () => {
       alert(result.error)
     }
   }
-}
-
-const convertServiceOrder = () => {
-  router.push(`/service-orders/${route.params.id}/convert`)
 }
 
 const cancelServiceOrder = async () => {
@@ -688,12 +794,12 @@ const canApprove = (serviceOrder: any) => {
   return serviceOrder?.status === 'aguardando_aprovacao'
 }
 
-const canComplete = (serviceOrder: any) => {
-  return serviceOrder && ['aberta', 'em_andamento'].includes(serviceOrder.status)
+const canApproveCustomer = (serviceOrder: any) => {
+  return serviceOrder?.billing_type === 'orcamento' && !serviceOrder?.customer_approved
 }
 
-const canConvert = (serviceOrder: any) => {
-  return serviceOrder?.billing_type === 'orcamento' && serviceOrder?.customer_approved
+const canComplete = (serviceOrder: any) => {
+  return serviceOrder && ['aberta', 'em_andamento'].includes(serviceOrder.status)
 }
 
 const canCancel = (serviceOrder: any) => {
@@ -708,11 +814,12 @@ const formatDateTime = (date: string) => {
   return new Date(date).toLocaleString('pt-BR')
 }
 
-const formatCurrency = (value: number) => {
+const formatCurrency = (value: any) => {
+  const num = safeNumber(value)
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL'
-  }).format(value)
+  }).format(num)
 }
 
 // Lifecycle
@@ -720,4 +827,186 @@ onMounted(async () => {
   await usersStore.fetchUsers()
   loadServiceOrder()
 })
+
+const loadServiceOrder = async () => {
+  loading.value = true
+  try {
+    const id = Number(route.params.id)
+    // Limpar pagamentos anteriores para evitar dados defasados
+    if (serviceOrderPaymentsStore.clearPayments) {
+      serviceOrderPaymentsStore.clearPayments()
+    }
+
+    const result = await serviceOrdersStore.fetchServiceOrder(id)
+    if (result.success) {
+      serviceOrder.value = result.serviceOrder
+      // Carregar pagamentos relacionados
+      try {
+        await serviceOrderPaymentsStore.fetchPayments(id)
+      } catch (e) {
+        // Silenciar erro de pagamentos para não bloquear a tela
+        console.warn('Falha ao carregar pagamentos da OS', e)
+      }
+    } else {
+      alert(result.error)
+      router.push('/service-orders')
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+// Edição do responsável técnico
+const startEditingTechnicalResponsible = () => {
+  editingTechnicalResponsibleData.value = (serviceOrder.value as any)?.technical_responsible_id || ''
+  editingTechnicalResponsible.value = true
+}
+
+const saveTechnicalResponsible = async () => {
+  if (!editingTechnicalResponsibleData.value) {
+    alert('Selecione um técnico responsável')
+    return
+  }
+  const id = Number(route.params.id)
+  const payload = { technical_responsible_id: editingTechnicalResponsibleData.value as any }
+  const result = await serviceOrdersStore.updateServiceOrder(id, payload)
+  if (result.success) {
+    editingTechnicalResponsible.value = false
+    await loadServiceOrder()
+  } else {
+    alert(result.error)
+  }
+}
+
+const cancelEditingTechnicalResponsible = () => {
+  editingTechnicalResponsible.value = false
+  editingTechnicalResponsibleData.value = ''
+}
+
+// Modal de pagamento
+const openPaymentModal = () => {
+  // Valor padrão: restante a pagar
+  paymentForm.value.amount = getMaxPaymentAmount()
+  paymentForm.value.payment_method = 'money'
+  paymentForm.value.payment_reference = ''
+  paymentForm.value.notes = ''
+  showPaymentModal.value = true
+}
+
+const closePaymentModal = () => {
+  if (!paymentSubmitting.value) {
+    showPaymentModal.value = false
+  }
+}
+
+const getMaxPaymentAmount = (): number => {
+  const so: any = serviceOrder.value as any
+  const remaining = safeNumber(so?.remaining_amount)
+  if (remaining > 0) return remaining
+  // Fallback se backend não fornecer remaining_amount
+  const finalAmount = safeNumber(so?.final_amount)
+  const totalPaid = safeNumber(so?.total_paid)
+  const calcRemaining = Math.max(0, finalAmount - totalPaid)
+  return calcRemaining
+}
+
+const registerPayment = async () => {
+  const id = Number(route.params.id)
+  
+  if (multiplePayments.value) {
+    // Validação para múltiplas formas de pagamento
+    if (paymentMethods.value.length === 0) {
+      alert('Adicione pelo menos uma forma de pagamento')
+      return
+    }
+
+    for (let i = 0; i < paymentMethods.value.length; i++) {
+      const payment = paymentMethods.value[i]
+      if (!payment.method) {
+        alert(`Selecione a forma de pagamento ${i + 1}`)
+        return
+      }
+      if (!payment.amount || parseFloat(payment.amount) <= 0) {
+        alert(`Informe um valor válido para o pagamento ${i + 1}`)
+        return
+      }
+      
+      // Validação de crédito para pagamentos a prazo
+      if (payment.method === 'credit') {
+        const available = getAvailableCredit()
+        if (parseFloat(payment.amount) > available) {
+          alert(`Crédito insuficiente para o pagamento ${i + 1}. Crédito disponível: ${formatCurrency(available)}`)
+          return
+        }
+      }
+    }
+
+    paymentSubmitting.value = true
+    try {
+      // Registrar cada pagamento individualmente
+      for (const payment of paymentMethods.value) {
+        await serviceOrderPaymentsStore.createPayment(id, {
+          amount: parseFloat(payment.amount),
+          payment_method: payment.method,
+          payment_reference: paymentForm.value.payment_reference || undefined,
+          notes: paymentForm.value.notes || undefined
+        })
+      }
+      
+      // Recarregar dados da OS e fechar modal
+      await loadServiceOrder()
+      showPaymentModal.value = false
+      
+      // Reset do formulário
+      multiplePayments.value = false
+      paymentMethods.value = [{ method: '', amount: 0 }]
+    } catch (e: any) {
+      alert(e?.response?.data?.message || e?.message || 'Erro ao registrar pagamentos')
+    } finally {
+      paymentSubmitting.value = false
+    }
+  } else {
+    // Lógica original para pagamento único
+    const amount = safeNumber(paymentForm.value.amount)
+    if (amount <= 0) {
+      alert('Informe um valor de pagamento válido')
+      return
+    }
+
+    // Validação de crédito para pagamentos a prazo
+    if (paymentForm.value.payment_method === 'credit' && !hasEnoughCredit.value) {
+      alert('Crédito insuficiente para este pagamento. Escolha outra forma de pagamento.')
+      return
+    }
+
+    paymentSubmitting.value = true
+    try {
+      await serviceOrderPaymentsStore.createPayment(id, {
+        amount,
+        payment_method: (paymentForm.value as any).payment_method,
+        payment_reference: paymentForm.value.payment_reference || undefined,
+        notes: paymentForm.value.notes || undefined
+      })
+      // Recarregar dados da OS (totais pagos/restante) e lista de pagamentos
+      await loadServiceOrder()
+      showPaymentModal.value = false
+    } catch (e: any) {
+      alert(e?.response?.data?.message || e?.message || 'Erro ao registrar pagamento')
+    } finally {
+      paymentSubmitting.value = false
+    }
+  }
+}
+
+const printPage = () => {
+  const id = route.params.id as string | number
+  const routeData = router.resolve({ name: 'service-order-print', params: { id } })
+  const href = routeData.href
+  const win = window.open(href, '_blank')
+  if (!win) {
+    // Fallback caso o navegador bloqueie popup
+    router.push(href)
+  }
+}
+
 </script>
