@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Payables - ClickVenda</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .error { color: red; }
+        .success { color: green; }
+        .info { color: blue; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+        input { padding: 5px; margin: 5px; width: 300px; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="container">
+            <h1>🔍 Debug Payables - ClickVenda</h1>
+            
+            <!-- Status da Autenticação -->
+            <div class="section">
+                <h2>🔐 Status da Autenticação</h2>
+                <p><strong>Token no localStorage:</strong> 
+                    <span :class="token ? 'success' : 'error'">
+                        {{ token ? token.substring(0, 20) + '...' : 'Nenhum token encontrado' }}
+                    </span>
+                </p>
+                
+                <div>
+                    <input v-model="testToken" placeholder="Cole um token de teste aqui">
+                    <button @click="setTestToken">Definir Token</button>
+                    <button @click="clearToken">Limpar Token</button>
+                </div>
+            </div>
+
+            <!-- Teste da API de Payables -->
+            <div class="section">
+                <h2>📊 Teste da API de Payables</h2>
+                <button @click="testPayablesAPI">Testar API de Payables</button>
+                <button @click="testStatisticsAPI">Testar API de Estatísticas</button>
+                
+                <div v-if="payablesResult">
+                    <h3>Resultado:</h3>
+                    <pre>{{ payablesResult }}</pre>
+                </div>
+            </div>
+
+            <!-- Teste do Store -->
+            <div class="section">
+                <h2>🏪 Teste do Store de Payables</h2>
+                <button @click="testPayablesStore">Testar Store</button>
+                
+                <div v-if="storeResult">
+                    <h3>Resultado do Store:</h3>
+                    <pre>{{ storeResult }}</pre>
+                </div>
+            </div>
+
+            <!-- Logs do Console -->
+            <div class="section">
+                <h2>📝 Logs</h2>
+                <div v-for="log in logs" :key="log.id" :class="log.type">
+                    <strong>{{ log.timestamp }}:</strong> {{ log.message }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const token = ref(localStorage.getItem('token'));
+                const testToken = ref('');
+                const payablesResult = ref('');
+                const storeResult = ref('');
+                const logs = ref([]);
+
+                const addLog = (message, type = 'info') => {
+                    logs.value.unshift({
+                        id: Date.now(),
+                        timestamp: new Date().toLocaleTimeString(),
+                        message,
+                        type
+                    });
+                };
+
+                const setTestToken = () => {
+                    if (testToken.value) {
+                        localStorage.setItem('token', testToken.value);
+                        token.value = testToken.value;
+                        addLog('Token definido com sucesso', 'success');
+                    }
+                };
+
+                const clearToken = () => {
+                    localStorage.removeItem('token');
+                    token.value = null;
+                    addLog('Token removido', 'info');
+                };
+
+                const testPayablesAPI = async () => {
+                    try {
+                        addLog('Testando API de Payables...', 'info');
+                        
+                        const headers = {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        };
+                        
+                        if (token.value) {
+                            headers['Authorization'] = `Bearer ${token.value}`;
+                        }
+                        
+                        const response = await axios.get('http://localhost:8000/api/payables', {
+                            headers
+                        });
+                        
+                        payablesResult.value = JSON.stringify(response.data, null, 2);
+                        addLog('API de Payables funcionando!', 'success');
+                        
+                    } catch (error) {
+                        payablesResult.value = `Erro: ${error.message}\nStatus: ${error.response?.status}\nResposta: ${JSON.stringify(error.response?.data, null, 2)}`;
+                        addLog(`Erro na API de Payables: ${error.message}`, 'error');
+                    }
+                };
+
+                const testStatisticsAPI = async () => {
+                    try {
+                        addLog('Testando API de Estatísticas...', 'info');
+                        
+                        const headers = {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        };
+                        
+                        if (token.value) {
+                            headers['Authorization'] = `Bearer ${token.value}`;
+                        }
+                        
+                        const response = await axios.get('http://localhost:8000/api/payables/statistics', {
+                            headers
+                        });
+                        
+                        payablesResult.value = JSON.stringify(response.data, null, 2);
+                        addLog('API de Estatísticas funcionando!', 'success');
+                        
+                    } catch (error) {
+                        payablesResult.value = `Erro: ${error.message}\nStatus: ${error.response?.status}\nResposta: ${JSON.stringify(error.response?.data, null, 2)}`;
+                        addLog(`Erro na API de Estatísticas: ${error.message}`, 'error');
+                    }
+                };
+
+                const testPayablesStore = async () => {
+                    try {
+                        addLog('Testando Store de Payables...', 'info');
+                        
+                        // Simular o comportamento do store
+                        const api = axios.create({
+                            baseURL: 'http://localhost:8000/api',
+                            timeout: 10000,
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        // Adicionar interceptor para token
+                        api.interceptors.request.use((config) => {
+                            const token = localStorage.getItem('token');
+                            if (token) {
+                                config.headers.Authorization = `Bearer ${token}`;
+                            }
+                            return config;
+                        });
+
+                        // Testar fetchPayables
+                        const payablesResponse = await api.get('/payables');
+                        const statisticsResponse = await api.get('/payables/statistics');
+                        
+                        storeResult.value = JSON.stringify({
+                            payables: payablesResponse.data,
+                            statistics: statisticsResponse.data
+                        }, null, 2);
+                        
+                        addLog('Store de Payables funcionando!', 'success');
+                        
+                    } catch (error) {
+                        storeResult.value = `Erro: ${error.message}\nStatus: ${error.response?.status}\nResposta: ${JSON.stringify(error.response?.data, null, 2)}`;
+                        addLog(`Erro no Store de Payables: ${error.message}`, 'error');
+                    }
+                };
+
+                onMounted(() => {
+                    addLog('Página de debug carregada', 'info');
+                    addLog(`Token encontrado: ${token.value ? 'Sim' : 'Não'}`, token.value ? 'success' : 'error');
+                });
+
+                return {
+                    token,
+                    testToken,
+                    payablesResult,
+                    storeResult,
+                    logs,
+                    setTestToken,
+                    clearToken,
+                    testPayablesAPI,
+                    testStatisticsAPI,
+                    testPayablesStore
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

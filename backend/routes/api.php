@@ -15,6 +15,7 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ServiceOrderController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\VehicleController;
+use App\Http\Controllers\SupplierController;
 
 // Rotas públicas
 Route::post('/login', [AuthController::class, 'login']);
@@ -50,12 +51,27 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/customers/{customer}/adjust-credit', [CustomerController::class, 'adjustCredit']);
     Route::apiResource('customers', CustomerController::class);
     
+    // Fornecedores
+    Route::apiResource('suppliers', SupplierController::class);
+    
     // Rotas para contas a receber
     Route::prefix('receivables')->group(function () {
         Route::get('/', [App\Http\Controllers\ReceivablePaymentController::class, 'index']);
         Route::get('/statistics', [App\Http\Controllers\ReceivablePaymentController::class, 'statistics']);
         Route::get('/customer/{customer}', [App\Http\Controllers\ReceivablePaymentController::class, 'byCustomer']);
         Route::post('/{receivablePayment}/payment', [App\Http\Controllers\ReceivablePaymentController::class, 'addPayment']);
+    });
+    
+    // Rotas para contas a pagar
+    Route::prefix('payables')->group(function () {
+        Route::get('/', [App\Http\Controllers\PayablePaymentController::class, 'index']);
+        Route::post('/', [App\Http\Controllers\PayablePaymentController::class, 'store']);
+        Route::get('/statistics', [App\Http\Controllers\PayablePaymentController::class, 'statistics']);
+        Route::get('/supplier/{supplier}', [App\Http\Controllers\PayablePaymentController::class, 'bySupplier']);
+        Route::get('/{payablePayment}', [App\Http\Controllers\PayablePaymentController::class, 'show']);
+        Route::put('/{payablePayment}', [App\Http\Controllers\PayablePaymentController::class, 'update']);
+        Route::delete('/{payablePayment}', [App\Http\Controllers\PayablePaymentController::class, 'destroy']);
+        Route::post('/{payablePayment}/payment', [App\Http\Controllers\PayablePaymentController::class, 'addPayment']);
     });
     
     // Pedidos
