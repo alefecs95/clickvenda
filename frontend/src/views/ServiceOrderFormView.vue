@@ -1,28 +1,22 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <header class="bg-white shadow-sm border-b border-gray-200">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center py-4">
-          <div class="flex items-center">
-            <button
-              @click="router.back()"
-              class="mr-4 p-2 text-gray-600 hover:text-gray-900"
-            >
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-              </svg>
-            </button>
-            <h1 class="text-xl font-semibold text-gray-900">
-              {{ isEdit ? 'Editar OS' : 'Nova Ordem de Serviço' }}
-            </h1>
-          </div>
+  <AppLayout>
+    <div class="max-w-8xl mx-auto">
+      <!-- Header -->
+      <div class="mb-6">
+        <div class="flex items-center">
+          <button
+            @click="router.back()"
+            class="mr-4 p-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100"
+          >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+          </button>
+          <h1 class="text-2xl font-bold text-gray-900">
+            {{ isEdit ? 'Editar OS' : 'Nova Ordem de Serviço' }}
+          </h1>
         </div>
       </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <form @submit.prevent="submitForm" class="space-y-6">
         <!-- Dados Básicos -->
         <div class="bg-white rounded-lg shadow p-6">
@@ -596,7 +590,6 @@
           </button>
         </div>
       </form>
-    </main>
 
     <!-- Modal de Cadastro de Veículo -->
     <div v-if="showVehicleModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
@@ -843,6 +836,7 @@
       </div>
     </div>
   </div>
+</AppLayout>
 </template>
 
 <script setup lang="ts">
@@ -855,6 +849,7 @@ import { useServicesStore } from '@/stores/services'
 import { useProductsStore } from '@/stores/products'
 import { useUsersStore } from '@/stores/users'
 import { showSuccess, showError, showWarning } from '@/utils/notifications'
+import AppLayout from '@/components/AppLayout.vue'
 
 const router = useRouter()
 const route = useRoute()

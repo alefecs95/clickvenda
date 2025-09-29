@@ -1,28 +1,22 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <header class="bg-white shadow-sm border-b border-gray-200">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center py-4">
-          <div class="flex items-center">
-            <button
-              @click="router.back()"
-              class="mr-4 p-2 text-gray-600 hover:text-gray-900"
-            >
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-              </svg>
-            </button>
-            <h1 class="text-xl font-semibold text-gray-900">
-              {{ isEditing ? 'Editar Veículo' : 'Novo Veículo' }}
-            </h1>
-          </div>
+  <AppLayout>
+    <div class="max-w-5xl mx-auto">
+      <!-- Header -->
+      <div class="mb-6">
+        <div class="flex items-center">
+          <button
+            @click="router.back()"
+            class="mr-4 p-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100"
+          >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+          </button>
+          <h1 class="text-2xl font-bold text-gray-900">
+            {{ isEditing ? 'Editar Veículo' : 'Novo Veículo' }}
+          </h1>
         </div>
       </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-2 py-8">
       <form @submit.prevent="saveVehicle" class="bg-white rounded-lg shadow p-6">
         <div class="space-y-6">
           <!-- Cliente (Opcional - apenas para faturamento) -->
@@ -207,8 +201,8 @@
           </button>
         </div>
       </form>
-    </main>
-  </div>
+    </div>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
@@ -216,6 +210,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useVehiclesStore } from '@/stores/vehicles'
 import { useCustomersStore } from '@/stores/customers'
+import AppLayout from '@/components/AppLayout.vue'
 
 const router = useRouter()
 const route = useRoute()

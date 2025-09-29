@@ -1,19 +1,19 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <header class="bg-white shadow-sm border-b border-gray-200">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center py-4">
+  <AppLayout>
+    <div class="max-w-7xl mx-auto">
+      <!-- Header -->
+      <div class="mb-6">
+        <div class="flex justify-between items-center">
           <div class="flex items-center">
             <button
               @click="router.back()"
-              class="mr-4 p-2 text-gray-600 hover:text-gray-900"
+              class="mr-4 p-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100"
             >
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
               </svg>
             </button>
-            <h1 class="text-xl font-semibold text-gray-900">Ordens de Serviço</h1>
+            <h1 class="text-2xl font-bold text-gray-900">Ordens de Serviço</h1>
           </div>
           
           <button
@@ -24,10 +24,6 @@
           </button>
         </div>
       </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Statistics -->
       <div v-if="statistics" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div class="bg-white rounded-lg shadow p-6">
@@ -172,46 +168,46 @@
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   OS
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Cliente
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                   Veículo/Equipamento
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                   Data Abertura
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Valor Total
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">
                   Status Pagamento
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ações
                 </th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
               <tr v-for="serviceOrder in serviceOrders" :key="serviceOrder.id" class="hover:bg-gray-50">
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-3 py-4 whitespace-nowrap">
                   <div class="text-sm font-medium text-gray-900">{{ serviceOrder.order_number }}</div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-3 py-4 whitespace-nowrap">
                   <div class="text-sm text-gray-900">{{ serviceOrder.customer?.name || 'N/A' }}</div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-3 py-4 whitespace-nowrap hidden md:table-cell">
                   <div class="text-sm text-gray-900">
                     {{ serviceOrder.vehicle ? getVehicleIdentification(serviceOrder.vehicle) : 'N/A' }}
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-3 py-4 whitespace-nowrap">
                   <span 
                     :class="getStatusBadgeClass(serviceOrder.status)"
                     class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
@@ -219,61 +215,53 @@
                     {{ getStatusLabel(serviceOrder.status) }}
                   </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ formatDate(serviceOrder.opening_date) }}
+                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900 hidden lg:table-cell">
+                  {{ formatDate(serviceOrder.created_at) }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ formatCurrency(serviceOrder.final_amount) }}
+                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ formatCurrency(serviceOrder.total_amount) }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="flex flex-col space-y-1">
-                    <span 
-                      :class="getPaymentStatusBadgeClass(serviceOrder)"
-                      class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                    >
-                      {{ getPaymentStatusLabel(serviceOrder) }}
-                    </span>
-                    <span v-if="serviceOrder.payment_method" class="text-xs text-gray-500">
-                      {{ getPaymentMethodLabel(serviceOrder.payment_method) }}
-                    </span>
-                    <span v-if="serviceOrder.payment_method === 'credit'" class="text-xs" :class="isServiceOrderOverdue(serviceOrder) ? 'text-red-600 font-medium' : 'text-gray-500'">
-                      Vencimento: {{ getDueDate(serviceOrder) }}
-                    </span>
-                  </div>
+                <td class="px-3 py-4 whitespace-nowrap hidden xl:table-cell">
+                  <span 
+                    :class="getPaymentStatusBadgeClass(serviceOrder)"
+                    class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
+                  >
+                    {{ getPaymentStatusLabel(serviceOrder) }}
+                  </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <div class="flex space-x-2">
+                <td class="px-3 py-4 whitespace-nowrap text-sm font-medium">
+                  <div class="flex space-x-1">
                     <button
                       @click="viewServiceOrder(serviceOrder.id)"
-                      class="text-primary-600 hover:text-primary-900"
+                      class="text-primary-600 hover:text-primary-900 text-xs"
                     >
                       Ver
                     </button>
                     <button
                       v-if="canApprove(serviceOrder)"
                       @click="approveServiceOrder(serviceOrder.id)"
-                      class="text-green-600 hover:text-green-900"
+                      class="text-green-600 hover:text-green-900 text-xs"
                     >
-                      Aprovar e Iniciar
+                      Aprovar
                     </button>
                     <button
                       v-if="canApproveCustomer(serviceOrder)"
                       @click="approveCustomerServiceOrder(serviceOrder.id)"
-                      class="text-yellow-600 hover:text-yellow-900"
+                      class="text-yellow-600 hover:text-yellow-900 text-xs"
                     >
-                      Aprovar Orçamento
+                      Orçamento
                     </button>
                     <button
                       v-if="canComplete(serviceOrder)"
                       @click="completeServiceOrder(serviceOrder.id)"
-                      class="text-blue-600 hover:text-blue-900"
+                      class="text-blue-600 hover:text-blue-900 text-xs"
                     >
                       Concluir
                     </button>
                     <button
                       v-if="canCancel(serviceOrder)"
                       @click="cancelServiceOrder(serviceOrder.id)"
-                      class="text-red-600 hover:text-red-900"
+                      class="text-red-600 hover:text-red-900 text-xs"
                     >
                       Cancelar
                     </button>
@@ -329,8 +317,8 @@
           </div>
         </div>
       </div>
-    </main>
-  </div>
+    </div>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
@@ -340,6 +328,7 @@ import { useServiceOrdersStore } from '@/stores/serviceOrders'
 import { useCustomersStore } from '@/stores/customers'
 import { useSettingsStore } from '@/stores/settings'
 import { useVehiclesStore } from '@/stores/vehicles'
+import AppLayout from '@/components/AppLayout.vue'
 
 const router = useRouter()
 const serviceOrdersStore = useServiceOrdersStore()
