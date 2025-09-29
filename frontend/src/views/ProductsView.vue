@@ -7,15 +7,309 @@
         <p class="text-gray-600">Gerencie seu catálogo de produtos</p>
       </div>
       
-      <button
-        @click="createProduct"
-        class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors flex items-center space-x-2"
-      >
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+      <div class="flex space-x-3">
+        <button
+          @click="showXmlImport = !showXmlImport"
+          class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+        >
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+          </svg>
+          <span>Compra e Importar XML</span>
+        </button>
+        
+        <button
+          @click="createProduct"
+          class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors flex items-center space-x-2"
+        >
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          <span>Novo Produto</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Seção de Importação XML -->
+    <div v-if="showXmlImport" class="bg-white shadow-sm rounded-lg p-6 mb-8">
+      <h2 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+        <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
         </svg>
-        <span>Novo Produto</span>
-      </button>
+        Compra e Importação de Produtos XML
+      </h2>
+
+      <div class="space-y-6">
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+              </svg>
+            </div>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-blue-800">Como funciona a importação</h3>
+              <div class="mt-2 text-sm text-blue-700">
+                <ul class="list-disc list-inside space-y-1">
+                  <li><strong>Produtos novos:</strong> Serão criados automaticamente no sistema</li>
+                  <li><strong>Produtos existentes:</strong> Terão o estoque atualizado (identificados por SKU ou código de barras)</li>
+                  <li><strong>Campos suportados:</strong> nome, descrição, preço de venda, preço de compra, margem de lucro, SKU, código de barras, quantidade</li>
+                  <li><strong>Código único:</strong> Cada produto é identificado pelo SKU ou código de barras que não muda entre notas</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo XML da Nota Fiscal</label>
+            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors">
+              <div class="space-y-1 text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <div class="flex text-sm text-gray-600">
+                  <label for="xml-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                    <span>Selecione um arquivo XML</span>
+                    <input 
+                      id="xml-upload" 
+                      ref="xmlFileInput"
+                      type="file" 
+                      accept=".xml"
+                      @change="handleFileSelect"
+                      class="sr-only"
+                    />
+                  </label>
+                  <p class="pl-1">ou arraste e solte aqui</p>
+                </div>
+                <p class="text-xs text-gray-500">XML até 10MB</p>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="selectedFile" class="bg-gray-50 rounded-lg p-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <div class="ml-3">
+                  <p class="text-sm font-medium text-gray-900">{{ selectedFile.name }}</p>
+                  <p class="text-sm text-gray-500">{{ formatFileSize(selectedFile.size) }}</p>
+                </div>
+              </div>
+              <button
+                @click="removeFile"
+                type="button"
+                class="text-gray-400 hover:text-gray-600"
+              >
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="flex space-x-4">
+            <button
+              @click="validateXml"
+              :disabled="!selectedFile || validating"
+              type="button"
+              class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg v-if="validating" class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              {{ validating ? 'Validando...' : 'Validar XML' }}
+            </button>
+
+            <button
+              @click="importXml"
+              :disabled="!selectedFile || !validationResult?.valid || importing"
+              type="button"
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg v-if="importing" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+              </svg>
+              {{ importing ? 'Importando...' : 'Importar Produtos' }}
+            </button>
+          </div>
+
+          <!-- Opções de Margem de Lucro -->
+          <div v-if="validationResult?.valid" class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 class="text-sm font-medium text-blue-800 mb-3">Configurações de Margem de Lucro</h3>
+            
+            <div class="space-y-4">
+              <!-- Opção: Seguir Margem Padrão -->
+              <div class="flex items-start">
+                <div class="flex items-center h-5">
+                  <input
+                    id="use-default-margin"
+                    v-model="useDefaultMargin"
+                    type="checkbox"
+                    class="focus:ring-primary-500 h-4 w-4 text-primary-600 border-gray-300 rounded"
+                  />
+                </div>
+                <div class="ml-3 text-sm">
+                  <label for="use-default-margin" class="font-medium text-gray-700">
+                    Seguir Margem Padrão ({{ settingsStore.salesSettings.default_profit_margin }}%)
+                  </label>
+                  <p class="text-gray-500">
+                    Aplicar automaticamente a margem de lucro padrão configurada no sistema para todos os produtos.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Opções Manuais (quando margem padrão não está marcada) -->
+              <div v-if="!useDefaultMargin" class="border-t border-blue-200 pt-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                      Margem de Lucro Personalizada (%)
+                    </label>
+                    <input
+                      v-model.number="customMargin"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="1000"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+                      placeholder="Ex: 30"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                      Fator de Multiplicação
+                    </label>
+                    <input
+                      v-model.number="priceFactor"
+                      type="number"
+                      step="0.01"
+                      min="1"
+                      max="10"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+                      placeholder="Ex: 1.3"
+                    />
+                  </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">
+                  Você pode definir uma margem personalizada ou um fator de multiplicação para calcular os preços de venda.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preview dos produtos a serem importados -->
+          <div v-if="validationResult?.valid && validationResult?.products" class="mt-6">
+            <h3 class="text-md font-medium text-gray-900 mb-4">Preview dos Produtos ({{ validationResult.products.length }} encontrados)</h3>
+            <div class="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
+              <div class="space-y-3">
+                <div 
+                  v-for="(product, index) in validationResult.products" 
+                  :key="index"
+                  class="bg-white rounded-lg p-3 border border-gray-200"
+                >
+                  <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                      <div class="flex items-center space-x-2 mb-2">
+                        <h4 class="font-medium text-gray-900">{{ product.name }}</h4>
+                        <span 
+                          :class="{
+                            'bg-green-100 text-green-800': product.action === 'update',
+                            'bg-blue-100 text-blue-800': product.action === 'create'
+                          }"
+                          class="inline-flex px-2 py-1 text-xs font-medium rounded-full"
+                        >
+                          {{ product.action === 'create' ? 'Novo' : 'Atualizar' }}
+                        </span>
+                      </div>
+                      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm text-gray-600">
+                        <div><strong>SKU:</strong> {{ product.sku || '-' }}</div>
+                        <div><strong>Código:</strong> {{ product.barcode || '-' }}</div>
+                        <div><strong>Preço:</strong> R$ {{ product.price?.toFixed(2) || '0,00' }}</div>
+                        <div><strong>Qtd:</strong> {{ product.quantity || 0 }}</div>
+                      </div>
+                      <div v-if="product.description" class="text-sm text-gray-500 mt-1">
+                        {{ product.description }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Resultado da validação -->
+          <div v-if="validationResult" class="mt-4">
+            <div v-if="validationResult.valid" class="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                </div>
+                <div class="ml-3">
+                  <h3 class="text-sm font-medium text-green-800">XML válido!</h3>
+                  <div class="mt-2 text-sm text-green-700">
+                    <p>{{ validationResult.products_count }} produtos encontrados no arquivo.</p>
+                    <p v-if="validationResult.new_products">{{ validationResult.new_products }} produtos novos serão criados.</p>
+                    <p v-if="validationResult.existing_products">{{ validationResult.existing_products }} produtos existentes terão estoque atualizado.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div v-else class="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                  </svg>
+                </div>
+                <div class="ml-3">
+                  <h3 class="text-sm font-medium text-red-800">Erro na validação</h3>
+                  <div class="mt-2 text-sm text-red-700">
+                    <p>{{ validationResult.message }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Resultado da importação -->
+          <div v-if="importResult" class="mt-4">
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                  </svg>
+                </div>
+                <div class="ml-3">
+                  <h3 class="text-sm font-medium text-blue-800">Importação concluída!</h3>
+                  <div class="mt-2 text-sm text-blue-700">
+                    <ul class="list-disc list-inside space-y-1">
+                      <li>{{ importResult.created }} produtos criados</li>
+                      <li>{{ importResult.updated }} produtos com estoque atualizado</li>
+                      <li v-if="importResult.errors > 0">{{ importResult.errors }} produtos com erro</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Search and Filters -->
@@ -233,7 +527,7 @@
                 
                 <!-- Preço -->
                 <div>
-                  <label class="block text-sm font-medium text-gray-700">Preço *</label>
+                  <label class="block text-sm font-medium text-gray-700">Preço de Venda *</label>
                   <input
                     ref="priceInput"
                     v-model="form.price"
@@ -241,9 +535,65 @@
                     step="0.01"
                     min="0"
                     required
-                    @keydown.enter.prevent="focusNextField('sku')"
+                    @input="onPriceChange"
+                    @keydown.enter.prevent="focusNextField('purchase_price')"
                     class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                   />
+                </div>
+                
+                <!-- Valor de Compra -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700">Valor de Compra</label>
+                  <input
+                    ref="purchasePriceInput"
+                    v-model="form.purchase_price"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    @input="calculateProfitMargin"
+                    @keydown.enter.prevent="focusNextField('profit_margin')"
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+                
+                <!-- Configuração de Margem de Lucro -->
+                <div class="space-y-3">
+                  <label class="block text-sm font-medium text-gray-700">Margem de Lucro</label>
+                  
+                  <!-- Checkbox para seguir margem padrão -->
+                  <div class="flex items-center space-x-3">
+                    <input
+                      v-model="form.use_default_margin"
+                      type="checkbox"
+                      id="use_default_margin"
+                      @change="onDefaultMarginToggle"
+                      class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                    />
+                    <label for="use_default_margin" class="text-sm text-gray-700">
+                      Seguir Margem Padrão ({{ settingsStore.salesSettings.default_profit_margin }}%)
+                    </label>
+                  </div>
+                  
+                  <!-- Campo de margem personalizada (visível apenas quando não usar padrão) -->
+                  <div v-if="!form.use_default_margin">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Margem de Lucro Personalizada (%)</label>
+                    <input
+                      ref="profitMarginInput"
+                      v-model="form.profit_margin"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      @input="onMarginChange"
+                      @keydown.enter.prevent="focusNextField('sku')"
+                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                      placeholder="Digite a margem personalizada"
+                    />
+                  </div>
+                  
+                  <!-- Exibição da margem atual (quando usando padrão) -->
+                  <div v-else class="text-sm text-gray-600">
+                    Margem aplicada: {{ settingsStore.salesSettings.default_profit_margin }}%
+                  </div>
                 </div>
                 
                 <!-- SKU -->
@@ -706,11 +1056,14 @@ import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProductsStore } from '@/stores/products'
 import { useVasilhamesStore } from '@/stores/vasilhames'
+import { useSettingsStore } from '@/stores/settings'
 import AppLayout from '@/components/AppLayout.vue'
+import api from '@/services/api'
 
 const router = useRouter()
 const productsStore = useProductsStore()
 const vasilhamesStore = useVasilhamesStore()
+const settingsStore = useSettingsStore()
 
 const loading = ref(false)
 const searchQuery = ref('')
@@ -719,6 +1072,20 @@ const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const editingProduct = ref<any>(null)
 const submitting = ref(false)
+
+// XML Import variables
+const showXmlImport = ref(false)
+const selectedFile = ref<File | null>(null)
+const validating = ref(false)
+const importing = ref(false)
+const validationResult = ref<any>(null)
+const importResult = ref<any>(null)
+const xmlFileInput = ref<HTMLInputElement>()
+
+// Margin configuration variables
+const useDefaultMargin = ref(true)
+const customMargin = ref<number | string>('')
+const priceFactor = ref<number | string>('')
 
 // Modal de Estoque
 const showStockModal = ref(false)
@@ -736,6 +1103,9 @@ const form = ref({
   name: '',
   description: '',
   price: '',
+  purchase_price: '',
+  profit_margin: '',
+  use_default_margin: true,
   stock_quantity: '',
   minimum_stock: '',
   sku: '',
@@ -823,6 +1193,59 @@ const toggleReturnable = () => {
   }
 }
 
+// Funções de cálculo para preço e margem
+const calculateProfitMargin = () => {
+  const purchasePrice = parseFloat(form.value.purchase_price)
+  const salePrice = parseFloat(form.value.price)
+  
+  if (purchasePrice > 0 && salePrice > 0) {
+    const margin = ((salePrice - purchasePrice) / purchasePrice) * 100
+    form.value.profit_margin = margin.toFixed(2)
+    // Desmarcar margem padrão quando calculada manualmente
+    form.value.use_default_margin = false
+  }
+}
+
+const calculateSalePrice = () => {
+  const purchasePrice = parseFloat(form.value.purchase_price)
+  const margin = parseFloat(form.value.profit_margin)
+  
+  if (purchasePrice > 0 && margin > 0) {
+    const salePrice = purchasePrice * (1 + margin / 100)
+    form.value.price = salePrice.toFixed(2)
+  }
+}
+
+// Função para lidar com mudança na margem padrão
+const onDefaultMarginToggle = () => {
+  if (form.value.use_default_margin) {
+    // Aplicar margem padrão
+    const defaultMargin = parseFloat(settingsStore.salesSettings.default_profit_margin)
+    form.value.profit_margin = defaultMargin.toString()
+    
+    // Recalcular preço se há valor de compra
+    const purchasePrice = parseFloat(form.value.purchase_price)
+    if (purchasePrice > 0) {
+      const salePrice = purchasePrice * (1 + defaultMargin / 100)
+      form.value.price = salePrice.toFixed(2)
+    }
+  }
+}
+
+// Função para lidar com mudança manual na margem
+const onMarginChange = () => {
+  // Desmarcar margem padrão quando alterada manualmente
+  form.value.use_default_margin = false
+  calculateSalePrice()
+}
+
+// Função para lidar com mudança no preço de venda
+const onPriceChange = () => {
+  // Desmarcar margem padrão quando preço alterado manualmente
+  form.value.use_default_margin = false
+  calculateProfitMargin()
+}
+
 // Função para submeter o formulário
 const submitForm = () => {
   handleSubmit()
@@ -868,10 +1291,19 @@ const handleSearch = () => {
 
 const editProduct = (product: any) => {
   editingProduct.value = product
+  
+  // Verificar se o produto está usando margem padrão
+  const defaultMargin = parseFloat(settingsStore.salesSettings.default_profit_margin)
+  const productMargin = product.profit_margin ? parseFloat(product.profit_margin) : 0
+  const isUsingDefaultMargin = Math.abs(productMargin - defaultMargin) < 0.01
+  
   form.value = {
     name: product.name,
     description: product.description || '',
     price: product.price.toString(),
+    purchase_price: product.purchase_price ? product.purchase_price.toString() : '',
+    profit_margin: product.profit_margin ? product.profit_margin.toString() : '',
+    use_default_margin: isUsingDefaultMargin,
     stock_quantity: product.stock_quantity.toString(),
     minimum_stock: product.minimum_stock ? product.minimum_stock.toString() : '',
     sku: product.sku || '',
@@ -909,6 +1341,8 @@ const handleSubmit = async () => {
       name: form.value.name,
       description: form.value.description || null,
       price: parseFloat(form.value.price),
+      purchase_price: form.value.purchase_price ? parseFloat(form.value.purchase_price) : null,
+      profit_margin: form.value.profit_margin ? parseFloat(form.value.profit_margin) : null,
       stock_quantity: parseInt(form.value.stock_quantity),
       minimum_stock: form.value.minimum_stock ? parseInt(form.value.minimum_stock) : 0,
       sku: form.value.sku || null,
@@ -950,6 +1384,9 @@ const closeModal = () => {
     name: '',
     description: '',
     price: '',
+    purchase_price: '',
+    profit_margin: '',
+    use_default_margin: true,
     stock_quantity: '',
     sku: '',
     barcode: '',
@@ -1078,12 +1515,127 @@ const loadParentProducts = async () => {
   }
 }
 
+// XML Import Functions
+const handleFileSelect = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  if (target.files && target.files.length > 0) {
+    selectedFile.value = target.files[0]
+    validationResult.value = null
+    importResult.value = null
+  }
+}
+
+const removeFile = () => {
+  selectedFile.value = null
+  validationResult.value = null
+  importResult.value = null
+  if (xmlFileInput.value) {
+    xmlFileInput.value.value = ''
+  }
+}
+
+const formatFileSize = (bytes: number) => {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
+
+const validateXml = async () => {
+  if (!selectedFile.value) return
+  
+  validating.value = true
+  validationResult.value = null
+  
+  try {
+    const formData = new FormData()
+    formData.append('xml_file', selectedFile.value)
+    
+    const response = await api.post('/products/xml/validate', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    
+    validationResult.value = response.data
+    
+    if (!response.data.valid) {
+      console.error('Erro na validação:', response.data.message)
+    }
+  } catch (error) {
+    console.error('Erro ao validar XML:', error)
+    validationResult.value = {
+      valid: false,
+      message: 'Erro ao processar o arquivo XML. Verifique se o arquivo está correto.'
+    }
+  } finally {
+    validating.value = false
+  }
+}
+
+const importXml = async () => {
+  if (!selectedFile.value || !validationResult.value?.valid) return
+  
+  importing.value = true
+  importResult.value = null
+  
+  try {
+    const formData = new FormData()
+    formData.append('xml_file', selectedFile.value)
+    
+    // Adicionar configurações de margem
+    if (useDefaultMargin.value) {
+      formData.append('use_default_margin', 'true')
+      formData.append('default_margin', settingsStore.salesSettings.default_profit_margin.toString())
+    } else {
+      formData.append('use_default_margin', 'false')
+      if (customMargin.value) {
+        formData.append('custom_margin', customMargin.value.toString())
+      }
+      if (priceFactor.value) {
+        formData.append('price_factor', priceFactor.value.toString())
+      }
+    }
+    
+    const response = await api.post('/products/xml/import', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    
+    importResult.value = response.data
+    
+    if (response.data.success) {
+      // Recarregar lista de produtos
+      await productsStore.fetchProducts()
+      
+      // Limpar formulário
+      selectedFile.value = null
+      validationResult.value = null
+      if (xmlFileInput.value) {
+        xmlFileInput.value.value = ''
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao importar XML:', error)
+    importResult.value = {
+      success: false,
+      message: 'Erro ao importar produtos. Tente novamente.'
+    }
+  } finally {
+    importing.value = false
+  }
+}
+
 onMounted(async () => {
   loading.value = true
   await productsStore.fetchProducts()
   await loadParentProducts()
   // carregar modelos de vasilhame para o select
   try { await vasilhamesStore.carregarModelos() } catch {}
+  // carregar configurações
+  await settingsStore.loadSettings()
   loading.value = false
 })
 </script>

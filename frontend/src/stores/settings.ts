@@ -20,6 +20,7 @@ export interface SalesSettings {
   default_payment_term: number | string
   default_credit_limit: number | string
   credit_alert_percentage: number | string
+  default_profit_margin: number | string
   auto_send_reminders: boolean | string
 }
 
@@ -53,6 +54,7 @@ export const useSettingsStore = defineStore('settings', () => {
     default_payment_term: '',
     default_credit_limit: '',
     credit_alert_percentage: '',
+    default_profit_margin: '',
     auto_send_reminders: ''
   })
 
@@ -129,6 +131,7 @@ export const useSettingsStore = defineStore('settings', () => {
         salesSettings.value.default_payment_term = salesData['sales.default_payment_term'] || 30
         salesSettings.value.default_credit_limit = salesData['sales.default_credit_limit'] || 500.00
         salesSettings.value.credit_alert_percentage = salesData['sales.credit_alert_percentage'] || 80
+        salesSettings.value.default_profit_margin = salesData['sales.default_profit_margin'] || 30
         salesSettings.value.auto_send_reminders = salesData['sales.auto_send_reminders'] ?? false
         console.log('Configurações de vendas atualizadas:', salesSettings.value)
         hasData = true

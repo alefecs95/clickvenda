@@ -13,10 +13,13 @@ class Product extends Model
         'name',
         'description',
         'price',
+        'purchase_price',
+        'profit_margin',
         'stock_quantity',
         'minimum_stock',
         'sku',
         'barcode',
+        'xml_code',
         'active',
         'available',
         'returnable',
@@ -33,6 +36,8 @@ class Product extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
+        'purchase_price' => 'decimal:2',
+        'profit_margin' => 'decimal:2',
         'returnable_price' => 'decimal:2',
         'active' => 'boolean',
         'available' => 'boolean',
@@ -285,5 +290,37 @@ class Product extends Model
         }
         
         return $info;
+    }
+    
+    /**
+     * Calcula o preço de venda baseado no valor de compra e margem de lucro
+     */
+    public function calculateSalePrice(): ?float
+    {
+        if (!$this->purchase_price || !$this->profit_margin) {
+            return null;
+        }
+        
+        return $this->purchase_price * (1 + ($this->profit_margin / 100));
+    }
+    
+    /**
+     * Calcula a margem de lucro baseada no preço de venda e valor de compra
+     */
+    public function calculateProfitMargin(): ?float
+    {
+        if (!$this->purchase_price || !$this->price || $this->purchase_price <= 0) {
+            return null;
+        }
+        
+        return (($this->price - $this->purchase_price) / $this->purchase_price) * 100;
+    }
+    
+    /**
+     * Verifica se o produto tem dados de custo completos
+     */
+    public function hasCostData(): bool
+    {
+        return !is_null($this->purchase_price) && !is_null($this->profit_margin);
     }
 }

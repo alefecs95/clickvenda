@@ -49,6 +49,7 @@ Obrigado pela preferência! 🙏', 'string', 'Template personalizado para mensag
         Setting::set('sales.default_payment_term', 30, 'number', 'Prazo padrão para pagamentos a prazo (dias)');
         Setting::set('sales.default_credit_limit', 500.00, 'number', 'Limite de crédito padrão para novos clientes');
         Setting::set('sales.credit_alert_percentage', 80, 'number', 'Percentual de uso do crédito para alerta');
+        Setting::set('sales.default_profit_margin', 30, 'number', 'Margem de lucro padrão para importação de produtos (%)');
         Setting::set('sales.auto_send_reminders', false, 'boolean', 'Enviar lembretes automáticos de vencimento');
 
         // Configurações do Sistema

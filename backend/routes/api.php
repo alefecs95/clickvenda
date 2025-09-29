@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductXmlImportController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\SettingsController;
@@ -34,6 +35,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/products/{product}/add-stock', [ProductController::class, 'addStock']);
     Route::put('/products/{product}/stock', [ProductController::class, 'updateStock']);
     Route::post('/products/{product}/stock-movement', [ProductController::class, 'addStockMovement']);
+    
+    // Importação XML de produtos
+    Route::post('/products/xml/validate', [ProductXmlImportController::class, 'validateXml']);
+    Route::post('/products/xml/import', [ProductXmlImportController::class, 'import']);
+    
     Route::apiResource('products', ProductController::class);
     
     // Clientes
