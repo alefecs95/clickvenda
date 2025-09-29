@@ -20,27 +20,50 @@
       <p>Erro ao carregar ordem de serviço: {{ error }}</p>
     </div>
 
-    <!-- Componente de impressão -->
+    <!-- Componente de impressão A4 -->
     <ServiceOrderPrint 
-      v-if="orderData && !loading" 
+      v-if="orderData && !loading && printTemplate === 'a4'" 
       :order-data="orderData" 
+    />
+
+    <!-- Componente de impressão Térmica -->
+    <ThermalServiceOrderPrint 
+      v-if="orderData && !loading && (printTemplate === '58mm' || printTemplate === '80mm')" 
+      :order-data="orderData"
+      :template="printTemplate"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ServiceOrderPrint from '@/components/ServiceOrderPrint.vue'
+import ThermalServiceOrderPrint from '@/components/ThermalServiceOrderPrint.vue'
+import { useSettingsStore } from '@/stores/settings'
 import api from '@/services/api'
 
 const route = useRoute()
 const router = useRouter()
+const settingsStore = useSettingsStore()
 
 const orderData = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const isPrinting = ref(false)
+
+// Normaliza o valor do template vindo das configurações/servidor
+const normalizeTemplate = (val) => {
+  if (!val) return 'a4'
+  const s = String(val).toLowerCase()
+  if (s.includes('80')) return '80mm'
+  if (s.includes('58')) return '58mm'
+  if (s.includes('a4')) return 'a4'
+  return 'a4'
+}
+
+// Obter template de impressão das configurações (normalizado)
+const printTemplate = computed(() => normalizeTemplate(settingsStore.systemSettings?.service_order_print_template))
 
 const loadOrderData = async () => {
   try {
@@ -79,8 +102,8 @@ const printOrder = () => {
     actions.style.display = 'none'
   }
   
-  // Imprimir
-  window.print()
+  // Usar função print com configuração térmica
+  print()
   
   // Restaurar botões após impressão
   setTimeout(() => {
@@ -95,8 +118,57 @@ const goBack = () => {
   router.go(-1)
 }
 
-onMounted(() => {
-  loadOrderData()
+const print = () => {
+  // Configurar página para impressão térmica
+  if (printTemplate.value === '58mm' || printTemplate.value === '80mm') {
+    // Adicionar classe específica ao body para aplicar regras @page
+    document.body.classList.add(`template-${printTemplate.value}`)
+    
+    // Configurar CSS específico para impressão térmica
+    const style = document.createElement('style')
+    style.textContent = `
+      @media print {
+        @page {
+          size: ${printTemplate.value} auto;
+          margin: 0;
+        }
+        
+        body {
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        
+        .thermal-service-order-print {
+          width: ${printTemplate.value};
+          max-width: ${printTemplate.value};
+        }
+      }
+    `
+    document.head.appendChild(style)
+    
+    // Aguardar um momento para aplicar os estilos
+    setTimeout(() => {
+      window.print()
+      
+      // Limpar após impressão
+      setTimeout(() => {
+        document.body.classList.remove(`template-${printTemplate.value}`)
+        document.head.removeChild(style)
+      }, 1000)
+    }, 100)
+  } else {
+    window.print()
+  }
+}
+
+onMounted(async () => {
+  // Garantir que as configurações estejam carregadas antes de decidir o template
+  try {
+    await settingsStore.loadSettings()
+  } catch (e) {
+    // O store já tenta carregar do localStorage em caso de falha
+  }
+  await loadOrderData()
 })
 </script>
 

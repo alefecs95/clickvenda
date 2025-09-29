@@ -32,6 +32,7 @@ export interface SystemSettings {
   language: string
   items_per_page: number | string
   auto_print_receipts: boolean | string
+  service_order_print_template: 'a4' | '80mm' | '58mm' | string
 }
 
 export const useSettingsStore = defineStore('settings', () => {
@@ -65,7 +66,8 @@ export const useSettingsStore = defineStore('settings', () => {
     theme: '',
     language: '',
     items_per_page: '',
-    auto_print_receipts: ''
+    auto_print_receipts: '',
+    service_order_print_template: 'a4'
   })
 
   // Computed properties
@@ -147,6 +149,7 @@ export const useSettingsStore = defineStore('settings', () => {
         systemSettings.value.language = systemData['system.language'] || 'pt-BR'
         systemSettings.value.items_per_page = systemData['system.items_per_page'] || 25
         systemSettings.value.auto_print_receipts = systemData['system.auto_print_receipts'] ?? false
+        systemSettings.value.service_order_print_template = systemData['system.service_order_print_template'] || 'a4'
         console.log('Configurações do sistema atualizadas:', systemSettings.value)
         hasData = true
       }

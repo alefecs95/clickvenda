@@ -1918,98 +1918,130 @@ const printSale = () => {
   const receiptFooter = settingsStore.storeSettings.receipt_footer || 'Obrigado pela preferência!'
   
   let printContent = ''
+  // Estilos dinâmicos para modelos térmicos
+  const containerWidth = printTemplate === '80mm' ? '80mm' : (printTemplate === '58mm' ? '58mm' : '210mm')
+  const baseFont = printTemplate === '80mm' ? '12px' : (printTemplate === '58mm' ? '10px' : '14px')
+  const pageCss = printTemplate === '80mm'
+    ? '@page{size:80mm auto;margin:0;}'
+    : (printTemplate === '58mm' ? '@page{size:58mm auto;margin:0;}' : '')
+  const dateStr = completedSale.value.date?.toLocaleDateString('pt-BR') || ''
+  const timeStr = completedSale.value.date?.toLocaleTimeString('pt-BR') || ''
+  const printCss = `
+    body { font-family: 'Courier New', monospace; }
+    .receipt { max-width: ${containerWidth}; margin: 0 auto; padding: ${printTemplate === '58mm' ? '8px' : '10px'}; font-size: ${baseFont}; }
+    .header { text-align: center; margin-bottom: ${printTemplate === '58mm' ? '10px' : '15px'}; }
+    .store-name { font-weight: bold; ${printTemplate === '58mm' ? 'font-size: 12px;' : 'font-size: 14px;'} }
+    .store-cnpj { font-size: ${printTemplate === '58mm' ? '8px' : '10px'}; color: #333; }
+    .separator { border-top: 1px solid #000; margin: ${printTemplate === '58mm' ? '8px' : '10px'} 0; }
+    .kv { margin: 2px 0; }
+    .kv b { letter-spacing: 0.3px; }
+    .section-title { font-weight: bold; margin-bottom: 4px; }
+    .items { margin-top: 4px; }
+    .item { margin-bottom: ${printTemplate === '58mm' ? '4px' : '6px'}; }
+    .item-line { display: flex; justify-content: space-between; align-items: baseline; }
+    .item-line .name { flex: 1; margin-right: 8px; }
+    .item-line .total { font-weight: bold; }
+    .item-meta { display: flex; gap: 8px; color: #333; ${printTemplate === '58mm' ? 'font-size: 9px;' : 'font-size: 10px;'} }
+    .total-row { display: flex; justify-content: space-between; font-weight: bold; ${printTemplate === '58mm' ? 'font-size: 11px;' : 'font-size: 14px;'} }
+    .footer { text-align: center; ${printTemplate === '58mm' ? 'font-size: 8px;' : 'font-size: 10px;'} margin-top: ${printTemplate === '58mm' ? '10px' : '15px'}; }
+  `
   
   if (printTemplate === '80mm') {
-    // Modelo 80mm - Impressora térmica padrão
+    // Modelo 80mm - Layout aprimorado
     printContent = `
-      <div style="font-family: 'Courier New', monospace; font-size: 12px; max-width: 80mm; margin: 0 auto; padding: 10px;">
-        <div style="text-align: center; margin-bottom: 15px;">
-          <div style="font-weight: bold; font-size: 14px;">${storeName}</div>
-          ${storeCnpj ? `<div style="font-size: 10px;">${storeCnpj}</div>` : ''}
+      <div class="receipt">
+        <div class="header">
+          <div class="store-name">${storeName}</div>
+          ${storeCnpj ? `<div class="store-cnpj">${storeCnpj}</div>` : ''}
         </div>
         
-        <div style="border-top: 1px solid #000; margin-bottom: 10px;"></div>
+        <div class="separator"></div>
+        <div class="kv"><b>Pedido:</b> #${completedSale.value.id}</div>
+        <div class="kv"><b>Data:</b> ${dateStr}</div>
+        <div class="kv"><b>Hora:</b> ${timeStr}</div>
+        ${completedSale.value.customer ? `<div class="kv"><b>Cliente:</b> ${completedSale.value.customer.name}</div>` : ''}
         
-        <div style="margin-bottom: 10px;">
-          <div><strong>Pedido:</strong> #${completedSale.value.id}</div>
-          <div><strong>Data:</strong> ${completedSale.value.date.toLocaleDateString('pt-BR')}</div>
-          <div><strong>Hora:</strong> ${completedSale.value.date.toLocaleTimeString('pt-BR')}</div>
-        </div>
-        
-        ${completedSale.value.customer ? `
-        <div style="margin-bottom: 10px;">
-          <div><strong>Cliente:</strong> ${completedSale.value.customer.name}</div>
-        </div>
-        ` : ''}
-        
-        <div style="border-top: 1px solid #000; margin: 10px 0;"></div>
-        
-        <div style="margin-bottom: 10px;">
-          <div style="font-weight: bold; margin-bottom: 5px;">Itens:</div>
+        <div class="separator"></div>
+        <div class="section-title">Itens:</div>
+        <div class="items">
           ${completedSale.value.items.map((item: any) => `
-            <div style="margin-bottom: 3px;">
-              ${item.product.name}<br>
-              ${item.quantity} x R$ ${formatPrice(item.product.price)} = R$ ${formatPrice(item.product.price * item.quantity)}
+            <div class="item">
+              <div class="item-line">
+                <span class="name">${item.product.name}</span>
+                <span class="total">R$ ${formatPrice(item.product.price * item.quantity)}</span>
+              </div>
+              <div class="item-meta">
+                <span>x${item.quantity}</span>
+                <span>R$ ${formatPrice(item.product.price)}</span>
+              </div>
             </div>
           `).join('')}
         </div>
         
-        <div style="border-top: 1px solid #000; margin: 10px 0;"></div>
-        
-        <div style="margin-bottom: 10px;">
-          <div style="font-weight: bold; font-size: 14px;">Total: R$ ${formatPrice(completedSale.value.total)}</div>
+        <div class="separator"></div>
+        <div class="total-row">
+          <span>Total:</span>
+          <span>R$ ${formatPrice(completedSale.value.total)}</span>
         </div>
         
-        <div style="margin-bottom: 10px;">
-          <div><strong>Pagamento:</strong></div>
-          ${completedSale.value.paymentMethods ? 
-            completedSale.value.paymentMethods.map((p: any) => `<div>${getPaymentMethodText(p.method)}: R$ ${formatPrice(p.amount)}</div>`).join('') :
-            `<div>${getPaymentMethodText(completedSale.value.paymentMethod)}</div>`
-          }
-        </div>
+        <div class="separator"></div>
+        <div class="section-title">Pagamento:</div>
+        ${completedSale.value.paymentMethods ? 
+          completedSale.value.paymentMethods.map((p: any) => `<div class="kv">${getPaymentMethodText(p.method)}: R$ ${formatPrice(p.amount)}</div>`).join('') :
+          `<div class="kv">${getPaymentMethodText(completedSale.value.paymentMethod)}</div>`
+        }
         
-        <div style="border-top: 1px solid #000; margin: 10px 0;"></div>
-        
-        <div style="text-align: center; margin-top: 15px; font-size: 10px;">
-          <div>${receiptFooter}</div>
-        </div>
+        <div class="separator"></div>
+        <div class="footer">${receiptFooter}</div>
       </div>
     `
   } else if (printTemplate === '58mm') {
-    // Modelo 58mm - Impressora térmica pequena
+    // Modelo 58mm - Layout aprimorado
     printContent = `
-      <div style="font-family: 'Courier New', monospace; font-size: 10px; max-width: 58mm; margin: 0 auto; padding: 8px;">
-        <div style="text-align: center; margin-bottom: 10px;">
-          <div style="font-weight: bold; font-size: 12px;">${storeName}</div>
-          ${storeCnpj ? `<div style="font-size: 8px;">${storeCnpj}</div>` : ''}
+      <div class="receipt">
+        <div class="header">
+          <div class="store-name">${storeName}</div>
+          ${storeCnpj ? `<div class="store-cnpj">${storeCnpj}</div>` : ''}
         </div>
         
-        <div style="border-top: 1px solid #000; margin-bottom: 8px;"></div>
+        <div class="separator"></div>
+        <div class="kv"><b>Pedido:</b> #${completedSale.value.id}</div>
+        <div class="kv"><b>Data:</b> ${dateStr}</div>
+        <div class="kv"><b>Hora:</b> ${timeStr}</div>
+        ${completedSale.value.customer ? `<div class="kv"><b>Cliente:</b> ${completedSale.value.customer.name}</div>` : ''}
         
-        <div style="margin-bottom: 8px; font-size: 9px;">
-          <div>#${completedSale.value.id} - ${completedSale.value.date.toLocaleDateString('pt-BR')}</div>
-          ${completedSale.value.customer ? `<div>${completedSale.value.customer.name}</div>` : ''}
-        </div>
-        
-        <div style="border-top: 1px solid #000; margin: 8px 0;"></div>
-        
-        <div style="margin-bottom: 8px; font-size: 9px;">
+        <div class="separator"></div>
+        <div class="section-title">Itens:</div>
+        <div class="items">
           ${completedSale.value.items.map((item: any) => `
-            <div style="margin-bottom: 2px;">
-              ${item.product.name} x${item.quantity} R$${formatPrice(item.product.price * item.quantity)}
+            <div class="item">
+              <div class="item-line">
+                <span class="name">${item.product.name}</span>
+                <span class="total">R$ ${formatPrice(item.product.price * item.quantity)}</span>
+              </div>
+              <div class="item-meta">
+                <span>x${item.quantity}</span>
+                <span>R$ ${formatPrice(item.product.price)}</span>
+              </div>
             </div>
           `).join('')}
         </div>
         
-        <div style="border-top: 1px solid #000; margin: 8px 0;"></div>
-        
-        <div style="margin-bottom: 8px;">
-          <div style="font-weight: bold; font-size: 11px;">Total: R$ ${formatPrice(completedSale.value.total)}</div>
+        <div class="separator"></div>
+        <div class="total-row">
+          <span>Total:</span>
+          <span>R$ ${formatPrice(completedSale.value.total)}</span>
         </div>
         
-        <div style="text-align: center; margin-top: 10px; font-size: 8px;">
-          <div>${receiptFooter}</div>
-        </div>
+        <div class="separator"></div>
+        <div class="section-title">Pagamento:</div>
+        ${completedSale.value.paymentMethods ? 
+          completedSale.value.paymentMethods.map((p: any) => `<div class="kv">${getPaymentMethodText(p.method)}: R$ ${formatPrice(p.amount)}</div>`).join('') :
+          `<div class="kv">${getPaymentMethodText(completedSale.value.paymentMethod)}</div>`
+        }
+        
+        <div class="separator"></div>
+        <div class="footer">${receiptFooter}</div>
       </div>
     `
   } else {
@@ -2082,9 +2114,9 @@ const printSale = () => {
         <head>
           <title>Comprovante de Venda #${completedSale.value.id}</title>
           <style>
-            @media print {
-              body { margin: 0; }
-            }
+            ${pageCss}
+            ${printCss}
+            @media print { body { margin: 0; } }
           </style>
         </head>
         <body>

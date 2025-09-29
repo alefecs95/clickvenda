@@ -408,6 +408,19 @@ Obrigado pela preferência! 🙏
                 <option value="100">100</option>
               </select>
             </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Modelo de Impressão - Ordens de Serviço</label>
+              <select
+                v-model="systemSettings.service_order_print_template"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value="a4">A4 (Impressora Laser/Jato de Tinta)</option>
+                <option value="80mm">80mm (Impressora Térmica Padrão)</option>
+                <option value="58mm">58mm (Impressora Térmica Pequena)</option>
+              </select>
+              <p class="text-xs text-gray-500 mt-1">Modelo de impressão para ordens de serviço</p>
+            </div>
           </div>
         </div>
       </div>

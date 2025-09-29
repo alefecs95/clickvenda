@@ -43,12 +43,12 @@ class ServiceOrderController extends Controller
             // Preparar dados para impressão
             $printData = [
                 'order_info' => [
-                    'number' => $serviceOrder->os_number,
-                    'opening_date' => $serviceOrder->opening_date?->format('d/m/Y'),
-                    'expected_delivery_date' => $serviceOrder->expected_delivery_date?->format('d/m/Y'),
-                    'completion_date' => $serviceOrder->completion_date?->format('d/m/Y'),
-                    'status' => $serviceOrder->getStatusLabel(),
-                ],
+                'number' => $serviceOrder->order_number,
+                'opening_date' => $serviceOrder->opening_date?->format('d/m/Y'),
+                'expected_delivery_date' => $serviceOrder->expected_delivery_date?->format('d/m/Y'),
+                'completion_date' => $serviceOrder->completion_date?->format('d/m/Y'),
+                'status' => $serviceOrder->status,
+            ],
                 'customer' => [
                     'name' => $serviceOrder->customer?->name ?? $serviceOrder->vehicle?->customer_name_at_time ?? 'Cliente não informado',
                     'phone' => $serviceOrder->customer?->phone ?? $serviceOrder->vehicle?->customer_phone_at_time ?? '',
@@ -102,6 +102,8 @@ class ServiceOrderController extends Controller
                     })->values(),
                 ],
                 'totals' => [
+                    'products_total' => $serviceOrder->items->where('item_type', 'product')->sum('total_price'),
+                    'services_total' => $serviceOrder->items->where('item_type', 'service')->sum('total_price'),
                     'total_amount' => $serviceOrder->total_amount,
                     'discount_amount' => $serviceOrder->discount_amount ?? 0,
                     'final_amount' => $serviceOrder->final_amount,
@@ -183,7 +185,7 @@ class ServiceOrderController extends Controller
             if ($request->filled('search')) {
                 $search = $request->get('search');
                 $query->where(function ($q) use ($search) {
-                    $q->where('os_number', 'like', "%{$search}%")
+                    $q->where('order_number', 'like', "%{$search}%")
                       ->orWhere('problem_description', 'like', "%{$search}%")
                       ->orWhereHas('customer', function ($customerQuery) use ($search) {
                           $customerQuery->where('name', 'like', "%{$search}%");
@@ -398,7 +400,7 @@ class ServiceOrderController extends Controller
                         'remaining_amount' => $serviceOrder->final_amount,
                         'due_date' => $validated['expected_delivery_date'] ?? now()->addDays($defaultPaymentTerm),
                         'status' => 'pending',
-                        'notes' => "OS #{$serviceOrder->os_number} - {$serviceOrder->problem_description}"
+                        'notes' => "OS #{$serviceOrder->order_number} - {$serviceOrder->problem_description}"
                     ]);
                 }
 

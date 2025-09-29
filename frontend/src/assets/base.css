@@ -84,3 +84,37 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Regras globais para impressão térmica */
+@media print {
+  body {
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Regras @page para templates térmicos */
+  .template-58mm {
+    @page {
+      size: 58mm auto;
+      margin: 0;
+    }
+  }
+  
+  .template-80mm {
+    @page {
+      size: 80mm auto;
+      margin: 0;
+    }
+  }
+  
+  /* Força o tamanho da página para impressoras térmicas */
+  @page thermal-58mm {
+    size: 58mm auto;
+    margin: 0;
+  }
+  
+  @page thermal-80mm {
+    size: 80mm auto;
+    margin: 0;
+  }
+}
